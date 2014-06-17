@@ -70,6 +70,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.SystemProperties;
 import android.provider.Settings;
 import android.util.AndroidRuntimeException;
 import android.util.DisplayMetrics;
@@ -3282,6 +3283,8 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             // System.out.println("Simple!");
         }
 
+        layoutResource = getLayoutResId(layoutResource);
+
         mDecor.startChanging();
 
         View in = mLayoutInflater.inflate(layoutResource, null);
@@ -4153,5 +4156,28 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
 
     void sendCloseSystemWindows(String reason) {
         PhoneWindowManager.sendCloseSystemWindows(getContext(), reason);
+    }
+
+    int getLayoutResId(int layoutResource) {
+        String bottom = SystemProperties.get("persist.sys.actionbar.bottom");
+        if ("true".equals(bottom)) {
+            switch (layoutResource) {
+            case com.android.internal.R.layout.screen:
+                return com.android.internal.R.layout.screenb;
+            case com.android.internal.R.layout.screen_action_bar:
+                return com.android.internal.R.layout.screenb_action_bar;
+            case com.android.internal.R.layout.screen_custom_title:
+                return com.android.internal.R.layout.screenb_custom_title;
+            case com.android.internal.R.layout.screen_progress:
+                return com.android.internal.R.layout.screenb_progress;
+            case com.android.internal.R.layout.screen_simple:
+                return com.android.internal.R.layout.screenb_simple;
+            case com.android.internal.R.layout.screen_title:
+                return com.android.internal.R.layout.screenb_title;
+            case com.android.internal.R.layout.screen_title_icons:
+                return com.android.internal.R.layout.screenb_title_icons;
+            }
+        }
+        return layoutResource;
     }
 }

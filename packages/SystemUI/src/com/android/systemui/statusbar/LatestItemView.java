@@ -21,8 +21,23 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.FrameLayout;
+import android.graphics.Canvas;
+import android.util.Log;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.StateListDrawable;
+import android.graphics.Bitmap.Config;
+import android.graphics.Paint;
+import android.graphics.Paint.Style;
+import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.util.StateSet;
+import android.graphics.Rect;
+import android.graphics.Bitmap;
 
 public class LatestItemView extends FrameLayout {
+
+    StateListDrawable bgdrawable = null;
+
     public LatestItemView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
@@ -45,4 +60,57 @@ public class LatestItemView extends FrameLayout {
         }
         return false;
     }
+
+    @Override
+    protected void onSizeChanged (int w, int h, int oldw, int oldh){
+        super.onSizeChanged(w, h, oldw, oldh);
+
+        int minHeight = getContext().getResources().getDimensionPixelSize(com.android.systemui.R.dimen.notification_min_height);
+
+        if(bgdrawable != null){  // Theme files exists
+            if(getHeight() > minHeight){ // For large notification
+
+                // create large images which contain bgdrawable
+                StateListDrawable stateListDrawable = new StateListDrawable();
+                Drawable drawablePressed=null;
+                Drawable drawableNormal=null;
+
+                Canvas c;
+                bgdrawable.selectDrawable(0);
+                Bitmap bmp =((BitmapDrawable)bgdrawable.getCurrent()).getBitmap();
+                Rect rimg = new Rect(0, 0, bmp.getWidth(), bmp.getHeight());
+                Rect r = new Rect(0, 0, getWidth(), minHeight);
+                Paint p = new Paint();
+                p.setStyle(Paint.Style.FILL_AND_STROKE);
+
+                Bitmap bmpPressed = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+                c = new Canvas(bmpPressed);
+                p.setColor(Color.argb(0x80,0x26,0x67,0x7f)); // translucent blue
+                c.drawRect(0,0,getWidth(),getHeight(),p);
+                c.drawBitmap(bmp, rimg, r, null);
+                drawablePressed=new BitmapDrawable(bmpPressed);
+
+                Bitmap bmpNormal = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+                c = new Canvas(bmpNormal);
+                p.setColor(Color.argb(0x80,0x18,0x18,0x18)); // translucent black
+                c.drawRect(0,0,getWidth(),getHeight(),p);
+                bgdrawable.selectDrawable(1);
+                c.drawBitmap(((BitmapDrawable)bgdrawable.getCurrent()).getBitmap(), rimg, r, null);
+                drawableNormal=new BitmapDrawable(bmpNormal);
+
+                stateListDrawable.addState(new int[] { android.R.attr.state_pressed }, drawablePressed);
+                stateListDrawable.addState(StateSet.WILD_CARD, drawableNormal);
+
+                setBackground(stateListDrawable);
+
+            }else{ // For normal notification
+                setBackground(bgdrawable);
+            }
+        }
+    }
+
+    public void setDrawable (Drawable d){
+        bgdrawable = (StateListDrawable)d;
+    }
+
 }
