@@ -941,6 +941,23 @@ public class KeyguardViewMediator {
             return;
         }
 
+        // if the current profile has disabled us, don't show
+        Profile profile = mProfileManager.getActiveProfile();
+        if (profile != null) {
+            if (!lockedOrMissing
+                    && profile.getScreenLockMode() == Profile.LockMode.DISABLE) {
+                if (DEBUG) Log.d(TAG, "doKeyguard: not showing because of profile override");
+                return;
+            }
+        }
+
+        String rotation = SystemProperties.get("persist.sys.theme.lock");
+        if (rotation.equals("true")) {
+            if (DEBUG) Log.d(TAG, "doKeyguard: not showing because during jcrom's theme changing.");
+            handleKeyguardDone(true, true);
+            return;
+        }
+
         if (DEBUG) Log.d(TAG, "doKeyguard: showing the lock screen");
         showLocked(options);
     }

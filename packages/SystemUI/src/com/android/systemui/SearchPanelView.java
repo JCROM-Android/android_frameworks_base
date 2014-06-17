@@ -51,6 +51,12 @@ import com.android.systemui.statusbar.StatusBarPanel;
 import com.android.systemui.statusbar.phone.KeyguardTouchDelegate;
 import com.android.systemui.statusbar.phone.PhoneStatusBar;
 
+import android.os.SystemProperties;
+import java.io.File;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
+import android.os.Environment;
+
 import java.util.ArrayList;
 
 public class SearchPanelView extends FrameLayout implements
@@ -142,6 +148,22 @@ public class SearchPanelView extends FrameLayout implements
         super.onFinishInflate();
         mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mSearchTargetsContainer = findViewById(R.id.search_panel_container);
+
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        if(forceHobby.equals("true")) {
+            ImageView mGlowImage = (ImageView)findViewById(R.id.search_panel_image);
+            StringBuilder builder = new StringBuilder();
+            builder.append(Environment.getDataDirectory().toString() + "/theme/navibar/");
+            builder.append("search_panel_image.png");
+            String filePath = builder.toString();
+
+            Drawable drawable = Drawable.createFromPath(filePath);
+            if(drawable != null && mGlowImage != null) {
+                mGlowImage.setImageDrawable(drawable);
+            }
+        }
+
+
         // TODO: fetch views
         mGlowPadView = (GlowPadView) findViewById(R.id.glow_pad_view);
         mGlowPadView.setOnTriggerListener(mGlowPadViewListener);

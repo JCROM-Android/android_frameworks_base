@@ -83,6 +83,7 @@ public class KeyButtonView extends ImageView {
                 } else {
                     // Just an old-fashioned ImageView
                     performLongClick();
+                    setPressed(false);
                 }
             }
         }
@@ -326,12 +327,14 @@ public class KeyButtonView extends ImageView {
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
+/*
                 x = (int)ev.getX();
                 y = (int)ev.getY();
                 setPressed(x >= -mTouchSlop
                         && x < getWidth() + mTouchSlop
                         && y >= -mTouchSlop
                         && y < getHeight() + mTouchSlop);
+*/
                 break;
             case MotionEvent.ACTION_CANCEL:
                 setPressed(false);
