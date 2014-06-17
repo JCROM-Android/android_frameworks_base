@@ -30,6 +30,12 @@ import com.android.systemui.statusbar.phone.NavbarEditor;
 import com.android.systemui.statusbar.phone.NavbarEditor.ButtonInfo;
 import com.android.systemui.statusbar.policy.KeyButtonView;
 
+import android.os.SystemProperties;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.ColorDrawable;
+import android.util.Log;
+
 public final class NavigationBarTransitions extends BarTransitions {
 
     private static final float KEYGUARD_QUIESCENT_ALPHA = 0.5f;
@@ -61,6 +67,35 @@ public final class NavigationBarTransitions extends BarTransitions {
         transitionTo(mRequestedMode, false /*animate*/);
     }
 
+    public void transitionJcrom(int mode, boolean animate, boolean transition) {
+        if(null == mView) {
+            return;
+        }
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        if(!(forceHobby.equals("true"))) {
+            return;
+        }
+
+        if(mode == MODE_TRANSLUCENT) {
+            Resources res = mView.getContext().getResources();
+            ColorDrawable transColorDrawable = new ColorDrawable(res.getColor(R.color.system_bar_background_transparent));
+            mView.setBackgroundDrawable((Drawable)transColorDrawable);        
+            if(transition) {
+                transitionTo(mode, animate);
+            }
+        }else {
+            Drawable drawable = null;
+            if(requiresRotation()) {
+                drawable = getDrawableFromFile("navibar", "navibar_background_land");
+            }else {
+                drawable = getDrawableFromFile("navibar", "navibar_background_port");
+            }
+            if(drawable != null) {
+                mView.setBackgroundDrawable(drawable);
+            }
+        }
+    }
+
     @Override
     public void transitionTo(int mode, boolean animate) {
         mRequestedMode = mode;
@@ -71,12 +106,14 @@ public final class NavigationBarTransitions extends BarTransitions {
             mode = MODE_TRANSPARENT;
         }
         super.transitionTo(mode, animate);
+        transitionJcrom(mode, animate, false);
     }
 
     @Override
     protected void onTransition(int oldMode, int newMode, boolean animate) {
         super.onTransition(oldMode, newMode, animate);
         applyMode(newMode, animate, false /*force*/);
+        transitionJcrom(newMode, animate, true);
     }
 
     private void applyMode(int mode, boolean animate, boolean force) {
@@ -84,6 +121,7 @@ public final class NavigationBarTransitions extends BarTransitions {
         final float alpha = alphaForMode(mode);
         setKeyButtonViewQuiescentAlpha(NavbarEditor.NAVBAR_HOME, alpha, animate);
         setKeyButtonViewQuiescentAlpha(NavbarEditor.NAVBAR_RECENT, alpha, animate);
+        setKeyButtonViewQuiescentAlpha(NavbarEditor.NAVBAR_EXPAND, alpha, animate);
         setKeyButtonViewQuiescentAlpha(NavbarEditor.NAVBAR_CONDITIONAL_MENU, alpha, animate);
         setKeyButtonViewQuiescentAlpha(NavbarEditor.NAVBAR_ALWAYS_MENU, alpha, animate);
         setKeyButtonViewQuiescentAlpha(NavbarEditor.NAVBAR_MENU_BIG, alpha, animate);
@@ -105,7 +143,11 @@ public final class NavigationBarTransitions extends BarTransitions {
     }
 
     private float alphaForMode(int mode) {
-        final boolean isOpaque = mode == MODE_OPAQUE || mode == MODE_LIGHTS_OUT;
+        boolean isOpaque = mode == MODE_OPAQUE || mode == MODE_LIGHTS_OUT;
+        String alphaNavikey = SystemProperties.get("persist.sys.alpha.navikey");
+        if((alphaNavikey.equals("true"))) {
+            isOpaque = false;
+        }
         return isOpaque ? KeyButtonView.DEFAULT_QUIESCENT_ALPHA : 1f;
     }
 
@@ -118,11 +160,15 @@ public final class NavigationBarTransitions extends BarTransitions {
         backAlpha = maxVisibleQuiescentAlpha(backAlpha,
                 mView.findButton(NavbarEditor.NAVBAR_RECENT));
         backAlpha = maxVisibleQuiescentAlpha(backAlpha,
+                mView.findButton(NavbarEditor.NAVBAR_EXPAND));
+        backAlpha = maxVisibleQuiescentAlpha(backAlpha,
                 mView.findButton(NavbarEditor.NAVBAR_CONDITIONAL_MENU));
         backAlpha = maxVisibleQuiescentAlpha(backAlpha,
                 mView.findButton(NavbarEditor.NAVBAR_ALWAYS_MENU));
         backAlpha = maxVisibleQuiescentAlpha(backAlpha,
                 mView.findButton(NavbarEditor.NAVBAR_MENU_BIG));
+        backAlpha = maxVisibleQuiescentAlpha(backAlpha,
+                mView.findButton(NavbarEditor.NAVBAR_EXPAND));
         if (backAlpha > 0) {
             setKeyButtonViewQuiescentAlpha(NavbarEditor.NAVBAR_BACK, backAlpha, animate);
         }

@@ -119,7 +119,11 @@ public class NavbarEditor implements View.OnTouchListener {
     public static final ButtonInfo NAVBAR_RECENT = new ButtonInfo("recent",
             R.string.navbar_recent_button, R.string.accessibility_recent,
             0, R.drawable.ic_sysbar_recent,
-            R.drawable.ic_sysbar_recent_land, R.drawable.ic_sysbar_recent_side);
+            R.drawable.ic_sysbar_recent_land, R.drawable.ic_sysbar_recent);
+    public static final ButtonInfo NAVBAR_EXPAND = new ButtonInfo("expand",
+            R.string.navbar_expand_button, R.string.accessibility_expand,
+            0, R.drawable.ic_sysbar_expand,
+            R.drawable.ic_sysbar_expand_land, R.drawable.ic_sysbar_expand);
     public static final ButtonInfo NAVBAR_CONDITIONAL_MENU = new ButtonInfo("menu0",
             R.string.navbar_menu_conditional_button, R.string.accessibility_menu,
             KeyEvent.KEYCODE_MENU, R.drawable.ic_sysbar_menu,
@@ -143,7 +147,7 @@ public class NavbarEditor implements View.OnTouchListener {
 
     private static final ButtonInfo[] ALL_BUTTONS = new ButtonInfo[] {
         NAVBAR_EMPTY, NAVBAR_HOME, NAVBAR_BACK, NAVBAR_SEARCH,
-        NAVBAR_RECENT, NAVBAR_CONDITIONAL_MENU, NAVBAR_ALWAYS_MENU, NAVBAR_MENU_BIG
+        NAVBAR_RECENT, NAVBAR_EXPAND, NAVBAR_CONDITIONAL_MENU, NAVBAR_ALWAYS_MENU, NAVBAR_MENU_BIG
     };
 
     private static final String DEFAULT_SETTING_STRING = "empty|back|home|recent|empty|menu0";

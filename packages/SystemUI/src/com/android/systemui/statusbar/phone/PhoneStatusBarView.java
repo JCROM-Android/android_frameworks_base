@@ -17,6 +17,7 @@
 package com.android.systemui.statusbar.phone;
 
 import android.app.ActivityManager;
+import android.content.res.Configuration;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
@@ -48,6 +49,7 @@ public class PhoneStatusBarView extends PanelBar {
     PanelView mLastFullyOpenedPanel = null;
     PanelView mNotificationPanel, mSettingsPanel;
     private boolean mShouldFade;
+    private boolean mShowSettingsPanel = false;
     private final PhoneStatusBarTransitions mBarTransitions;
     private GestureDetector mDoubleTapGesture;
 
@@ -117,6 +119,13 @@ public class PhoneStatusBarView extends PanelBar {
     }
 
     @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        //mBar.updateStatusBarBackground();
+        mBar.updateNotificationBackground();
+    }
+
+    @Override
     public boolean onRequestSendAccessibilityEvent(View child, AccessibilityEvent event) {
         if (super.onRequestSendAccessibilityEvent(child, event)) {
             // The status bar is very small so augment the view that the user is touching
@@ -136,14 +145,6 @@ public class PhoneStatusBarView extends PanelBar {
         final float x = touch.getX();
         final boolean isLayoutRtl = isLayoutRtl();
 
-        if (mFullWidthNotifications) {
-            // No double swiping. If either panel is open, nothing else can be pulled down.
-            return ((mSettingsPanel == null ? 0 : mSettingsPanel.getExpandedHeight())
-                        + mNotificationPanel.getExpandedHeight() > 0)
-                    ? null
-                    : mNotificationPanel;
-        }
-
         // We split the status bar into thirds: the left 2/3 are for notifications, and the
         // right 1/3 for quick settings. If you pull the status bar down a second time you'll
         // toggle panels no matter where you pull it down.
@@ -159,7 +160,22 @@ public class PhoneStatusBarView extends PanelBar {
 
         if (region < mSettingsPanelDragzoneMin) region = mSettingsPanelDragzoneMin;
 
+        int screenConfig = getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+        if (screenConfig == Configuration.SCREENLAYOUT_SIZE_NORMAL) {
+            region = w * 0.1f;
+        }
+
+        mShowSettingsPanel = w - x < region;
         final boolean showSettings = isLayoutRtl ? (x < region) : (w - region < x);
+
+        if (mFullWidthNotifications) {
+            // No double swiping. If either panel is open, nothing else can be pulled down.
+            return ((mSettingsPanel == null ? 0 : mSettingsPanel.getExpandedHeight())
+                    + mNotificationPanel.getExpandedHeight() > 0)
+                    ? null
+                    : mNotificationPanel;
+        }
+
         return showSettings ? mSettingsPanel : mNotificationPanel;
     }
 

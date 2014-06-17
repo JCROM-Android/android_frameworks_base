@@ -38,6 +38,14 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true">
 
+            <ImageView
+                android:id="@+id/search_panel_image" 
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/navbar_search_panel_height"
+                android:layout_alignParentBottom="true"
+                android:gravity="top"
+            />
+
             <com.android.internal.widget.multiwaveview.GlowPadView
                 android:id="@+id/glow_pad_view"
                 android:orientation="horizontal"
@@ -59,6 +67,7 @@
                 prvandroid:glowRadius="@*android:dimen/glowpadview_glow_radius"
                 prvandroid:pointDrawable="@*android:drawable/ic_lockscreen_glowdot"
                />
+
 
         </RelativeLayout>
 
