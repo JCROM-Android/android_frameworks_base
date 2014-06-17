@@ -36,6 +36,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Rect;
@@ -68,6 +69,10 @@ import android.widget.ImageView.ScaleType;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
+import java.io.File;
+import android.graphics.drawable.Drawable;
+import android.os.Environment;
+import android.os.SystemProperties;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar;
@@ -75,6 +80,7 @@ import com.android.systemui.statusbar.StatusBarPanel;
 import com.android.systemui.statusbar.phone.PhoneStatusBar;
 
 import java.util.ArrayList;
+import android.graphics.Rect;
 
 public class RecentsPanelView extends FrameLayout implements OnItemClickListener, RecentsCallback,
         StatusBarPanel, Animator.AnimatorListener {
@@ -101,6 +107,8 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     private int mRecentItemLayoutId;
     private boolean mHighEndGfx;
     private ImageView mClearRecents;
+    private boolean mMyFrame = false;
+    Bitmap mMyFrameBmp = null;
 
     public static interface RecentsScrollView {
         public int numItemsInOneScreenful();
@@ -272,6 +280,20 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
 
     public RecentsPanelView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        if (forceHobby.equals("true")) {
+            mMyFrame = true;
+            String MY_FRAME_FILE = "my_frame.png";
+            StringBuilder builder = new StringBuilder();
+            builder.append(Environment.getDataDirectory().toString() + "/theme/frame/");
+            builder.append(File.separator);
+            builder.append(MY_FRAME_FILE);
+            String filePath = builder.toString();
+            Drawable drawable = Drawable.createFromPath(filePath);
+            if( drawable != null ) {
+                mMyFrameBmp = ((BitmapDrawable) drawable).getBitmap();
+            }
+        }
         updateValuesFromResources();
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.RecentsPanelView,
@@ -504,6 +526,27 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
 
     private void updateThumbnail(ViewHolder h, Drawable thumbnail, boolean show, boolean anim) {
         if (thumbnail != null) {
+
+            if ( true == mMyFrame ) {
+                if(!(thumbnail instanceof ColorDrawableWithDimensions)) {
+                    if( null != mMyFrameBmp ) {
+                        Canvas c = new Canvas(((BitmapDrawable) thumbnail).getBitmap());
+
+                        int w0 = mMyFrameBmp.getWidth();
+                        int h0 = mMyFrameBmp.getHeight();
+                        int w1 = c.getWidth();
+
+                        float rate = 1.0F;
+
+                        if(w0 != w1 &&  w0!=0){
+                            rate = w1/(float)w0;
+                        }
+                        Rect src=new Rect(0, 0, w0, h0);
+                        Rect dst=new Rect(0, 0, w1, (int)(h0*rate));
+                        c.drawBitmap(mMyFrameBmp, src, dst, null );
+                    }
+                }
+            }
             // Should remove the default image in the frame
             // that this now covers, to improve scrolling speed.
             // That can't be done until the anim is complete though.

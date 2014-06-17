@@ -57,6 +57,13 @@ import android.view.accessibility.AccessibilityManager.TouchExplorationStateChan
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import android.os.SystemProperties;
+import java.io.File;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
+import android.widget.FrameLayout;
+import android.os.Environment;
+
 import com.android.internal.widget.LockPatternUtils;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar;
@@ -85,6 +92,8 @@ public class NavigationBarView extends LinearLayout {
     private OnClickListener mRecentsClickListener;
     private OnTouchListener mRecentsPreloadListener;
     private OnTouchListener mHomeSearchActionListener;
+    private OnClickListener mExpandClickListener;
+    private OnLongClickListener mExpandLongClickListener;
 
     final Display mDisplay;
     View mCurrentView = null;
@@ -307,10 +316,13 @@ public class NavigationBarView extends LinearLayout {
     }
 
     /* package */ void setListeners(OnClickListener recentsClickListener,
-            OnTouchListener recentsPreloadListener, OnTouchListener homeSearchActionListener) {
+            OnTouchListener recentsPreloadListener, OnTouchListener homeSearchActionListener,
+            OnClickListener expandClickListener, OnLongClickListener expandLongClickListener) {
         mRecentsClickListener = recentsClickListener;
         mRecentsPreloadListener = recentsPreloadListener;
         mHomeSearchActionListener = homeSearchActionListener;
+        mExpandClickListener = expandClickListener;
+        mExpandLongClickListener = expandLongClickListener;
         updateButtonListeners();
     }
 
@@ -335,6 +347,11 @@ public class NavigationBarView extends LinearLayout {
         View homeView = findButton(NavbarEditor.NAVBAR_HOME);
         if (homeView != null) {
             homeView.setOnTouchListener(mHomeSearchActionListener);
+        }
+        View expandView = mCurrentView.findViewWithTag(NavbarEditor.NAVBAR_EXPAND);
+        if (expandView != null) {
+            expandView.setOnClickListener(mExpandClickListener);
+            expandView.setOnLongClickListener(mExpandLongClickListener);
         }
     }
 
@@ -419,6 +436,11 @@ public class NavigationBarView extends LinearLayout {
         getIcons(mContext.getResources());
 
         super.setLayoutDirection(layoutDirection);
+
+		String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+		if (forceHobby.equals("true")) {
+    		setButtonTheme();
+		}
     }
 
     public class NavBarReceiver extends BroadcastReceiver {
@@ -499,6 +521,7 @@ public class NavigationBarView extends LinearLayout {
 
         final boolean disableHome = ((disabledFlags & View.STATUS_BAR_DISABLE_HOME) != 0);
         final boolean disableRecent = ((disabledFlags & View.STATUS_BAR_DISABLE_RECENT) != 0);
+        final boolean disableExpand = ((disabledFlags & View.STATUS_BAR_DISABLE_EXPAND) != 0);
         final boolean disableBack = ((disabledFlags & View.STATUS_BAR_DISABLE_BACK) != 0)
                 && ((mNavigationIconHints & StatusBarManager.NAVIGATION_HINT_BACK_ALT) == 0);
         final boolean disableSearch = ((disabledFlags & View.STATUS_BAR_DISABLE_SEARCH) != 0);
@@ -527,10 +550,11 @@ public class NavigationBarView extends LinearLayout {
         setButtonVisibility(NavbarEditor.NAVBAR_BACK, !disableBack);
         setButtonVisibility(NavbarEditor.NAVBAR_HOME, !disableHome);
         setButtonVisibility(NavbarEditor.NAVBAR_RECENT, !disableRecent);
-        setButtonVisibility(NavbarEditor.NAVBAR_RECENT, !disableRecent);
+        setButtonVisibility(NavbarEditor.NAVBAR_EXPAND, !disableExpand);
         setButtonVisibility(NavbarEditor.NAVBAR_ALWAYS_MENU, !disableRecent);
         setButtonVisibility(NavbarEditor.NAVBAR_MENU_BIG, !disableRecent);
         setButtonVisibility(NavbarEditor.NAVBAR_SEARCH, !disableRecent);
+        setButtonVisibility(NavbarEditor.NAVBAR_EXPAND, !disableExpand);
 
         final boolean showSearch = disableHome && !disableSearch;
         final boolean showCamera = showSearch && !mCameraDisabledByDpm
@@ -593,6 +617,9 @@ public class NavigationBarView extends LinearLayout {
 
         setButtonVisibility(NavbarEditor.NAVBAR_CONDITIONAL_MENU, mShowMenu);
     }
+
+    public void setButtonTheme() {
+	}
 
     @Override
     public void onFinishInflate() {
@@ -824,6 +851,7 @@ public class NavigationBarView extends LinearLayout {
         dumpButton(pw, "back", findButton(NavbarEditor.NAVBAR_BACK));
         dumpButton(pw, "home", findButton(NavbarEditor.NAVBAR_HOME));
         dumpButton(pw, "rcnt", findButton(NavbarEditor.NAVBAR_RECENT));
+        dumpButton(pw, "expn", findButton(NavbarEditor.NAVBAR_EXPAND));
         dumpButton(pw, "srch", getSearchLight());
         dumpButton(pw, "cmra", getCameraButton());
 

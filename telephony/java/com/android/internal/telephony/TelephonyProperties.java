@@ -211,6 +211,18 @@ public interface TelephonyProperties
      */
     static final String PROPERTY_IGNORE_NITZ = "telephony.test.ignore.nitz";
 
+    // JCROM SIM emulation
+    static final String PROPERTY_SIM_EMULATION = "persist.sys.sim.emulation";
+    static final String EMULATION_OPERATOR_NUMERIC = "persist.sys.operator.mcc";
+    static final String EMULATION_OPERATOR_ALPHA = "persist.sys.operator.name";
+    static final String EMULATION_OPERATOR_ISO_COUNTRY = "persist.sys.operator.country";
+    static final String EMULATION_OPERATOR_ISROAMING = "persist.sys.operator.roaming";
+    static final String EMULATION_ICC_OPERATOR_NUMERIC = "persist.sys.sim.mcc";
+    static final String EMULATION_ICC_OPERATOR_ALPHA = "persist.sys.sim.name";
+    static final String EMULATION_ICC_OPERATOR_ISO_COUNTRY = "persist.sys.sim.country";
+    // Use "gsm." prefix, should add below line in system/core/init/property_service.c property_perms[] array
+    //    { "gsm.",             AID_SYSTEM,   0 },    // JCROM
+
     /**
      * Set to true to indicates support for simultaneous voice and EvDo.
      */

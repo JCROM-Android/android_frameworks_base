@@ -23,7 +23,7 @@
     xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
     android:id="@+id/notification_panel"
     android:layout_width="0dp"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:background="@drawable/notification_panel_bg"
     android:paddingTop="@dimen/notification_panel_padding_top"
     android:layout_marginStart="@dimen/notification_panel_margin_left"
@@ -61,7 +61,7 @@
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_marginBottom="@dimen/close_handle_underlap"
         android:orientation="vertical"
         android:animateLayoutChanges="false"
@@ -90,7 +90,7 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             >
             <ViewStub android:id="@+id/flip_settings_stub"
                 android:layout="@layout/flip_settings"
@@ -101,16 +101,23 @@
             <ScrollView
                 android:id="@+id/scroll"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:fadingEdge="none"
                 android:overScrollMode="ifContentScrolls"
+                android:fillViewport="true"
                 >
-                <com.android.systemui.statusbar.policy.NotificationRowLayout
-                    android:id="@+id/latestItems"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    systemui:rowHeight="@dimen/notification_row_min_height"
-                    />
+                    android:layout_height="match_parent"
+                    android:gravity="bottom"
+                    >
+                    <com.android.systemui.statusbar.policy.NotificationRowLayout
+                        android:id="@+id/latestItems"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        systemui:rowHeight="@dimen/notification_row_min_height"
+                        />
+                </LinearLayout>
             </ScrollView>
         </FrameLayout>
     </LinearLayout>

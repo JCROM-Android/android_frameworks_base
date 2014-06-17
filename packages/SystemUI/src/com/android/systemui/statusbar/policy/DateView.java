@@ -33,9 +33,15 @@ import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.view.ViewParent;
 import android.widget.TextView;
+import android.graphics.Color;
+import android.util.Slog;
+import android.os.Environment;
 
 import com.android.systemui.R;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -50,6 +56,13 @@ public class DateView extends TextView implements OnClickListener, OnLongClickLi
     private SimpleDateFormat mWeekdayFormat;
     private SimpleDateFormat mDateFormat;
     private String mLastText;
+
+    public static final String THEME_DIRECTORY = "/theme/notification/";
+    public static final String CONFIGURATION_FILE = "notification.conf";
+    public static final String DATE_COLOR = "color.date";
+    private final String mFilePath;
+    private Properties prop;
+    private String mColor = null;
 
     private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
         @Override
@@ -71,8 +84,21 @@ public class DateView extends TextView implements OnClickListener, OnLongClickLi
 
     public DateView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mFilePath = Environment.getDataDirectory() + THEME_DIRECTORY + CONFIGURATION_FILE;
+        loadConf(mFilePath, DATE_COLOR);
         setOnClickListener(this);
         setOnLongClickListener(this);
+    }
+
+    private void loadConf(String filePath, String propertyName) {
+        prop = new Properties();
+        try {
+            prop.load(new FileInputStream(filePath));
+            mColor = prop.getProperty(propertyName);
+        } catch (IOException e) {
+            mColor = null;
+            return;
+        }
     }
 
     @Override
@@ -107,6 +133,11 @@ public class DateView extends TextView implements OnClickListener, OnLongClickLi
 
             mDateFormat = new SimpleDateFormat(dateFmt, l);
             mWeekdayFormat = new SimpleDateFormat(weekdayFmt, l);
+        }
+
+        if(null != mColor) {
+            int color = (int)(Long.parseLong(mColor, 16));
+            setTextColor(color);
         }
 
         mCurrentTime.setTime(System.currentTimeMillis());

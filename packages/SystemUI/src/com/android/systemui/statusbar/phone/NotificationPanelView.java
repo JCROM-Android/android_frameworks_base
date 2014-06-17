@@ -27,6 +27,7 @@ import android.util.EventLog;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
+import android.os.SystemProperties;
 
 import com.android.systemui.EventLogTags;
 import com.android.systemui.R;
@@ -68,9 +69,15 @@ public class NotificationPanelView extends PanelView {
         super.onFinishInflate();
 
         Resources resources = getContext().getResources();
-        mHandleBar = resources.getDrawable(R.drawable.status_bar_close);
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        if (forceHobby.equals("true")) {
+            mHandleBar = resources.getDrawable(R.drawable.status_bar_close_jcrom);
+            mHandleView = findViewById(R.id.handle);
+        } else {
+            mHandleBar = resources.getDrawable(R.drawable.status_bar_close);
+            mHandleView = findViewById(R.id.handle);
+        }
         mHandleBarHeight = resources.getDimensionPixelSize(R.dimen.close_handle_height);
-        mHandleView = findViewById(R.id.handle);
     }
 
     @Override

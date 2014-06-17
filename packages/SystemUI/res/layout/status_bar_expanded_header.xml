@@ -21,7 +21,7 @@
     android:id="@+id/header"
     android:layout_width="match_parent"
     android:layout_height="@dimen/notification_panel_header_height"
-    android:background="@drawable/notification_header_bg"
+    android:background="@drawable/notification_jcrom_header_bg"
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:baselineAligned="false"
@@ -40,7 +40,7 @@
             android:paddingEnd="4dp"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Clock"
-            android:background="@drawable/ic_notify_button_bg"
+            android:background="@drawable/notification_jcrom_header_bg"
             android:gravity="center_vertical"
             android:clickable="true"
             />
@@ -50,7 +50,7 @@
             android:layout_height="match_parent"
             android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Date"
             android:layout_toEndOf="@id/clock"
-            android:background="@drawable/ic_notify_button_bg"
+            android:background="@drawable/notification_jcrom_header_bg"
             android:gravity="center_vertical"
             android:paddingStart="4dp"
             android:paddingEnd="8dp"
@@ -86,16 +86,15 @@
             android:layout_height="50dp"
             android:scaleType="center"
             android:src="@drawable/ic_notify_clear"
-            android:background="@drawable/ic_notify_button_bg"
+            android:background="@drawable/notification_jcrom_header_bg"
             android:contentDescription="@string/accessibility_clear_all"
             />
-
         <ImageView android:id="@+id/add_tile_button"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:scaleType="center"
             android:src="@drawable/ic_menu_add"
-            android:background="@drawable/ic_notify_button_bg"
+            android:background="@drawable/notification_jcrom_header_bg"
             android:visibility="gone"
             android:contentDescription="@string/accessibility_desc_add_quick_settings"
             />
@@ -111,7 +110,7 @@
             android:layout_height="50dp"
             android:scaleType="center"
             android:src="@drawable/ic_notify_settings"
-            android:background="@drawable/ic_notify_button_bg"
+            android:background="@drawable/notification_jcrom_header_bg"
             android:contentDescription="@string/accessibility_desc_quick_settings"
             />
         <ImageView android:id="@+id/notification_button"
@@ -119,7 +118,7 @@
             android:layout_height="50dp"
             android:scaleType="center"
             android:src="@drawable/ic_notifications"
-            android:background="@drawable/ic_notify_button_bg"
+            android:background="@drawable/notification_jcrom_header_bg"
             android:visibility="gone"
             android:contentDescription="@string/accessibility_notifications_button"
             />
