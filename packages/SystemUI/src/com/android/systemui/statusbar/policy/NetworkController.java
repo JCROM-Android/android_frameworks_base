@@ -18,10 +18,13 @@
 
 package com.android.systemui.statusbar.policy;
 
+import java.util.HashMap;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.drawable.Drawable;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -30,9 +33,11 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wimax.WimaxManagerConstants;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.SystemProperties;
 import android.provider.Settings;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
@@ -55,6 +60,9 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 public class NetworkController extends BroadcastReceiver implements DemoMode {
     // debug
@@ -147,6 +155,14 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
     private boolean mEthernetConnected = false;
     private int mEthernetIconId = 0;
     private int mLastEthernetIconId = 0;
+    public static final String THEME_DIRECTORY = "/theme/notification/";
+    public static final String CONFIGURATION_FILE = "notification.conf";
+    public static final String EMERGENCYLABEL_COLOR = "color.emergency";
+    public static final String CARRIER_COLOR = "color.carrier";
+    private String mFilePath;
+    private Properties prop;
+    private String mColorEmergency = null;
+    private String mColorCarrier = null;
 
     // our ui
     protected Context mContext;
@@ -268,6 +284,10 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
         updateAirplaneMode();
 
         mLastLocale = mContext.getResources().getConfiguration().locale;
+
+        mFilePath = Environment.getDataDirectory() + THEME_DIRECTORY + CONFIGURATION_FILE;
+        mColorEmergency = loadConf(mFilePath, EMERGENCYLABEL_COLOR);
+        mColorCarrier = loadConf(mFilePath, CARRIER_COLOR);
     }
 
     public boolean hasMobileDataFeature() {
@@ -1522,6 +1542,10 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
         N = mMobileLabelViews.size();
         for (int i=0; i<N; i++) {
             TextView v = mMobileLabelViews.get(i);
+            if(null != mColorCarrier) {
+                int color = (int)(Long.parseLong(mColorCarrier, 16));
+                v.setTextColor(color);
+            }
             v.setText(mobileLabel);
             if ("".equals(mobileLabel)) {
                 v.setVisibility(View.GONE);
@@ -1537,6 +1561,10 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
             if (!emergencyOnly) {
                 v.setVisibility(View.GONE);
             } else {
+                if(null != mColorEmergency) {
+                    int color = (int)(Long.parseLong(mColorEmergency, 16));
+                    v.setTextColor(color);
+                }
                 v.setText(mobileLabel); // comes from the telephony stack
                 v.setVisibility(View.VISIBLE);
             }
@@ -1807,4 +1835,15 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
     public void setListener(UpdateUIListener listener) {
         mUpdateUIListener = listener;
     }
+
+    private String loadConf(String filePath, String propertyName) {
+        prop = new Properties();
+        try {
+            prop.load(new FileInputStream(filePath));
+            return prop.getProperty(propertyName);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
 }

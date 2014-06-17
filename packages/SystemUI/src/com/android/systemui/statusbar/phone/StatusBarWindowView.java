@@ -21,12 +21,14 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewRootImpl;
 import android.widget.FrameLayout;
 import android.widget.ScrollView;
+import android.os.SystemProperties;
 
 import com.android.systemui.ExpandHelper;
 import com.android.systemui.R;
@@ -63,6 +65,11 @@ public class StatusBarWindowView extends FrameLayout
         mExpandHelper = new ExpandHelper(mContext, latestItems, minHeight, maxHeight);
         mExpandHelper.setEventSource(this);
         mExpandHelper.setScrollView(mScrollView);
+
+        String notification = SystemProperties.get("persist.sys.notification");
+        if (notification.equals("true")) {
+            mExpandHelper.setGravity(Gravity.BOTTOM);
+        }
 
         // We really need to be able to animate while window animations are going on
         // so that activities may be started asynchronously from panel animations
