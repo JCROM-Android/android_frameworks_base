@@ -44,6 +44,8 @@ public class StatusBarWindowManager {
 
     private final State mCurrentState = new State();
 
+    private static final String LOCKSCREEN_ROTATE_PROPERTY = "persist.sys.lockscreen.rotate";
+
     public StatusBarWindowManager(Context context) {
         mContext = context;
         mWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
@@ -52,8 +54,10 @@ public class StatusBarWindowManager {
 
     private boolean shouldEnableKeyguardScreenRotation() {
         Resources res = mContext.getResources();
+        String rotation = SystemProperties.get(LOCKSCREEN_ROTATE_PROPERTY);
         return SystemProperties.getBoolean("lockscreen.rot_override", false)
-                || res.getBoolean(R.bool.config_enableLockScreenRotation);
+                || res.getBoolean(R.bool.config_enableLockScreenRotation)
+                || rotation.equals("true");
     }
 
     /**
