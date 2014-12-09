@@ -265,20 +265,20 @@ public class NotificationPanelView extends PanelView implements
 
     public void themeLoad() {
         Drawable drawable = null;
-        String mFilePath = null;
-        String mColorQsBackground = null;
-        String mColorNotificationHeader = null;
+        String filePath = null;
+        String colorQsBackground = null;
+        String colorNotificationHeader = null;
 
         String forceHobby = SystemProperties.get("persist.sys.force.hobby");
 
         if (forceHobby.equals("true")) {
-            mFilePath = Environment.getDataDirectory() + THEME_DIRECTORY + CONFIGURATION_FILE;
-            mColorQsBackground = loadConf(mFilePath, QS_BACKGROUND_COLOR);
-            mColorNotificationHeader = loadConf(mFilePath, NOTIFICATION_HEADER_COLOR);
+            filePath = Environment.getDataDirectory() + THEME_DIRECTORY + CONFIGURATION_FILE;
+            colorQsBackground = loadConf(filePath, QS_BACKGROUND_COLOR);
+            colorNotificationHeader = loadConf(filePath, NOTIFICATION_HEADER_COLOR);
         }
         
-        if ((forceHobby.equals("true")) && (mColorQsBackground != null)) {
-            drawable = new ColorDrawable((int)(Long.parseLong(mColorQsBackground, 16)));
+        if ((forceHobby.equals("true")) && (colorQsBackground != null)) {
+            drawable = new ColorDrawable((int)(Long.parseLong(colorQsBackground, 16)));
         }else {
             drawable = getResources().getDrawable(R.drawable.qs_background_primary);
         }
@@ -286,8 +286,8 @@ public class NotificationPanelView extends PanelView implements
             mQsContainer.setBackground(drawable);
         }
 
-        if ((forceHobby.equals("true")) && (mColorNotificationHeader != null)) {
-            drawable = new ColorDrawable((int)(Long.parseLong(mColorNotificationHeader, 16)));
+        if ((forceHobby.equals("true")) && (colorNotificationHeader != null)) {
+            drawable = new ColorDrawable((int)(Long.parseLong(colorNotificationHeader, 16)));
         }else {
             drawable = getResources().getDrawable(R.drawable.notification_header_bg);
         }
