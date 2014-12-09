@@ -33,6 +33,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.os.SystemProperties;
+import java.io.File;
+
 /**
  * The Typeface class specifies the typeface and intrinsic style of a font.
  * This is used in the paint, along with optionally Paint settings like
@@ -275,7 +278,22 @@ public class Typeface {
     private static void init() {
         // Load font config and initialize Minikin state
         File systemFontConfigLocation = getSystemFontConfigLocation();
-        File configFilename = new File(systemFontConfigLocation, FONTS_CONFIG);
+        File themeFontConfigLocation = getThemeFontConfigLocation();
+        File configFilename = null;
+
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+
+        if (forceHobby.equals("true")) {
+            configFilename = new File(themeFontConfigLocation, FONTS_CONFIG);
+        }
+        if (configFilename == null) {
+            configFilename = new File(systemFontConfigLocation, FONTS_CONFIG);
+        } else {
+            if (!(configFilename.exists())) {
+                configFilename = new File(systemFontConfigLocation, FONTS_CONFIG);
+            }
+        }
+
         try {
             FileInputStream fontsIn = new FileInputStream(configFilename);
             FontListParser.Config fontConfig = FontListParser.parse(fontsIn);
@@ -352,6 +370,20 @@ public class Typeface {
 
     private static File getSystemFontConfigLocation() {
         return new File("/system/etc/");
+    }
+
+    private static File getThemeFontConfigLocation() {
+        return new File("/data/theme/font/");
+    }
+
+    /**
+     * Clears caches in java and skia.
+     * Skia will then reparse font config
+     * @hide
+     */
+    public static void recreateDefaults() {
+        sTypefaceCache.clear();
+        init();
     }
 
     @Override
