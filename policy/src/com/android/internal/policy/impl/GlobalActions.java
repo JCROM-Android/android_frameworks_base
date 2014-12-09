@@ -221,7 +221,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private GlobalActionsDialog createDialog() {
         // Simple toggle style if there's no vibrator, otherwise use a tri-state
         if (!mHasVibrator) {
-            mSilentModeAction = new SilentModeToggleAction();
+            //mSilentModeAction = new SilentModeToggleAction();
+            mSilentModeAction = new SilentModeTriStateAction(mContext, mAudioManager, mHandler);
         } else {
             mSilentModeAction = new SilentModeTriStateAction(mContext, mAudioManager, mHandler);
         }
