@@ -3077,6 +3077,12 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name="com.android.server.SoftwareUpdateReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.SOFTWARE_UPDATE" />
+            </intent-filter>
+        </receiver>
+
         <receiver android:name="com.android.server.MasterClearReceiver"
             android:permission="android.permission.MASTER_CLEAR">
             <intent-filter
