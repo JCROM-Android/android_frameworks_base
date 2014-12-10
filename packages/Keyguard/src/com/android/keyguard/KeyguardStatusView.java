@@ -238,8 +238,8 @@ public class KeyguardStatusView extends GridLayout {
             clockView24 = DateFormat.getBestDateTimePattern(locale, clockView24Skel);
 
             // Use fancy colon.
-            clockView24 = clockView24.replace(':', '\uee01');
-            clockView12 = clockView12.replace(':', '\uee01');
+            //clockView24 = clockView24.replace(':', '\uee01');
+            //clockView12 = clockView12.replace(':', '\uee01');
 
             cacheKey = key;
         }
