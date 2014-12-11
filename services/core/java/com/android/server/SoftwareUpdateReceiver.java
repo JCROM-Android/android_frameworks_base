@@ -20,6 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.RecoverySystem;
+import android.os.SystemProperties;
 import android.util.Log;
 import android.util.Slog;
 import java.io.File;
@@ -38,6 +39,7 @@ public class SoftwareUpdateReceiver extends BroadcastReceiver {
                 try {
 					File UpdateFile = new File("/cache/jcrom.zip");
                     File GappsFile = new File("/cache/gapps.zip");
+                    SystemProperties.set("sys.shutdown.user.requested", "true");
                     RecoverySystem.installPackage(context, UpdateFile, GappsFile);
                     Log.wtf(TAG, "Still running after software update?!");
                 } catch (IOException e) {
