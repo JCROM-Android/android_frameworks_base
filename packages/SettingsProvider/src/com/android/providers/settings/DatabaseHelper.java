@@ -67,6 +67,7 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "SettingsProvider";
     private static final String DATABASE_NAME = "settings.db";
+    private static final String VOICE_CAPABLE_PROPERTY = "persist.sys.voice.capable";
 
     // Please, please please. If you update the database version, check to make sure the
     // database gets upgraded properly. At a minimum, please confirm that 'upgradeVersion'
@@ -934,8 +935,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                                 (1 << AudioManager.STREAM_NOTIFICATION) |
                                                 (1 << AudioManager.STREAM_SYSTEM) |
                                                 (1 << AudioManager.STREAM_SYSTEM_ENFORCED);
-                if (!mContext.getResources().getBoolean(
-                        com.android.internal.R.bool.config_voice_capable)) {
+                //if (!mContext.getResources().getBoolean(
+                //        com.android.internal.R.bool.config_voice_capable)) {
+                if (!SystemProperties.getBoolean(VOICE_CAPABLE_PROPERTY, true)) {
                     ringerModeAffectedStreams |= (1 << AudioManager.STREAM_MUSIC);
                 }
                 db.execSQL("DELETE FROM system WHERE name='"
@@ -2236,8 +2238,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                             (1 << AudioManager.STREAM_NOTIFICATION) |
                                             (1 << AudioManager.STREAM_SYSTEM) |
                                             (1 << AudioManager.STREAM_SYSTEM_ENFORCED);
-            if (!mContext.getResources().getBoolean(
-                    com.android.internal.R.bool.config_voice_capable)) {
+            //if (!mContext.getResources().getBoolean(
+            //        com.android.internal.R.bool.config_voice_capable)) {
+            if (!SystemProperties.getBoolean(VOICE_CAPABLE_PROPERTY, true)) {
                 ringerModeAffectedStreams |= (1 << AudioManager.STREAM_MUSIC);
             }
             loadSetting(stmt, Settings.System.MODE_RINGER_STREAMS_AFFECTED,

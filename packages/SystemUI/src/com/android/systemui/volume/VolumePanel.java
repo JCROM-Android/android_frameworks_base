@@ -45,6 +45,7 @@ import android.net.Uri;
 import android.os.Debug;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemProperties;
 import android.os.Vibrator;
 import android.provider.Settings;
 import android.util.Log;
@@ -82,6 +83,8 @@ public class VolumePanel extends Handler {
     private static boolean LOGD = Log.isLoggable(TAG, Log.DEBUG);
 
     private static final int PLAY_SOUND_DELAY = AudioService.PLAY_SOUND_DELAY;
+
+    private static final String VOICE_CAPABLE_PROPERTY = "persist.sys.voice.capable";
 
     /**
      * The delay before vibrating. This small period exists so if the user is
@@ -429,7 +432,8 @@ public class VolumePanel extends Handler {
 
         mToneGenerators = new ToneGenerator[AudioSystem.getNumStreamTypes()];
         mVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-        mVoiceCapable = context.getResources().getBoolean(R.bool.config_voice_capable);
+        //mVoiceCapable = context.getResources().getBoolean(R.bool.config_voice_capable);
+        mVoiceCapable = SystemProperties.getBoolean(VOICE_CAPABLE_PROPERTY, true);
 
         if (mZenController != null && !useMasterVolume) {
             mZenModeAvailable = mZenController.isZenAvailable();

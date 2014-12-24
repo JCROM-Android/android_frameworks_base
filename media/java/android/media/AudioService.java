@@ -361,6 +361,8 @@ public class AudioService extends IAudioService.Stub {
             "STREAM_TTS"
     };
 
+    private static final String VOICE_CAPABLE_PROPERTY = "persist.sys.voice.capable";
+
     private final AudioSystem.ErrorCallback mAudioSystemCallback = new AudioSystem.ErrorCallback() {
         public void onError(int error) {
             switch (error) {
@@ -546,8 +548,9 @@ public class AudioService extends IAudioService.Stub {
         mContentResolver = context.getContentResolver();
         mAppOps = (AppOpsManager)context.getSystemService(Context.APP_OPS_SERVICE);
 
-        if (mContext.getResources().getBoolean(
-                com.android.internal.R.bool.config_voice_capable)) {
+        //if (mContext.getResources().getBoolean(
+        //        com.android.internal.R.bool.config_voice_capable)) {
+        if (SystemProperties.getBoolean(VOICE_CAPABLE_PROPERTY, true)) {
             mPlatformType = PLATFORM_VOICE;
         } else if (context.getPackageManager().hasSystemFeature(
                                                             PackageManager.FEATURE_TELEVISION)) {
