@@ -27,6 +27,9 @@ import android.content.res.Configuration;
 import android.database.ContentObserver;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Environment;
+import android.os.SystemProperties;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -57,6 +60,10 @@ import com.android.systemui.statusbar.policy.KeyguardUserSwitcher;
 import com.android.systemui.statusbar.stack.NotificationStackScrollLayout;
 import com.android.systemui.statusbar.stack.StackStateAnimator;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 public class NotificationPanelView extends PanelView implements
         ExpandableView.OnHeightChangedListener, ObservableScrollView.Listener,
         View.OnClickListener, NotificationStackScrollLayout.OnOverscrollTopChangedListener,
@@ -73,6 +80,11 @@ public class NotificationPanelView extends PanelView implements
     private static final int DOZE_BACKGROUND_COLOR = 0xff000000;
     private static final int TAG_KEY_ANIM = R.id.scrim;
     private static final long DOZE_BACKGROUND_ANIM_DURATION = ScrimController.ANIMATION_DURATION;
+
+    private static final String THEME_DIRECTORY = "/theme/notification/";
+    private static final String CONFIGURATION_FILE = "notification.conf";
+    private static final String QS_BACKGROUND_COLOR = "color.qs_background";
+    private static final String NOTIFICATION_HEADER_COLOR = "color.notification_header";
 
     private KeyguardAffordanceHelper mAfforanceHelper;
     private StatusBarHeaderView mHeader;
@@ -246,6 +258,52 @@ public class NotificationPanelView extends PanelView implements
                 }
             }
         });
+
+        themeLoad();
+
+    }
+
+    public void themeLoad() {
+        Drawable drawable = null;
+        String mFilePath = null;
+        String mColorQsBackground = null;
+        String mColorNotificationHeader = null;
+
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+
+        if (forceHobby.equals("true")) {
+            mFilePath = Environment.getDataDirectory() + THEME_DIRECTORY + CONFIGURATION_FILE;
+            mColorQsBackground = loadConf(mFilePath, QS_BACKGROUND_COLOR);
+            mColorNotificationHeader = loadConf(mFilePath, NOTIFICATION_HEADER_COLOR);
+        }
+        
+        if ((forceHobby.equals("true")) && (mColorQsBackground != null)) {
+            drawable = new ColorDrawable((int)(Long.parseLong(mColorQsBackground, 16)));
+        }else {
+            drawable = getResources().getDrawable(R.drawable.qs_background_primary);
+        }
+        if (drawable != null) {
+            mQsContainer.setBackground(drawable);
+        }
+
+        if ((forceHobby.equals("true")) && (mColorNotificationHeader != null)) {
+            drawable = new ColorDrawable((int)(Long.parseLong(mColorNotificationHeader, 16)));
+        }else {
+            drawable = getResources().getDrawable(R.drawable.notification_header_bg);
+        }
+        if (drawable != null) {
+            mHeader.setBackground(drawable);
+        }
+    }
+
+    private String loadConf(String filePath, String propertyName) {
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream(filePath));
+            return prop.getProperty(propertyName);
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     @Override
