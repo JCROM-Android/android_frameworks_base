@@ -19,11 +19,13 @@
 #define LOG_TAG "BootAnimation"
 
 #include <stdint.h>
+#include <string.h>
 #include <sys/types.h>
 #include <math.h>
 #include <fcntl.h>
 #include <utils/misc.h>
 #include <signal.h>
+#include <dirent.h>
 #include <pthread.h>
 #include <sys/select.h>
 
@@ -59,6 +61,8 @@
 #include "BootAnimation.h"
 #include "AudioPlayer.h"
 
+#define MY_BOOTANIMATION_FILE "/data/theme/bootanime/bootanimation.zip"
+#define MY_BOOTANIMATION_DIR "/data/theme/bootanime/"
 #define OEM_BOOTANIMATION_FILE "/oem/media/bootanimation.zip"
 #define SYSTEM_BOOTANIMATION_FILE "/system/media/bootanimation.zip"
 #define SYSTEM_ENCRYPTED_BOOTANIMATION_FILE "/system/media/bootanimation-encrypted.zip"
@@ -384,8 +388,55 @@ status_t BootAnimation::readyToRun() {
     // instead of system predefined boot animation files.
     bool encryptedAnimation = atoi(decrypt) != 0 || !strcmp("trigger_restart_min_framework", decrypt);
 
+    mAndroidAnimation = true;
     ZipFileRO* zipFile = NULL;
-    if ((encryptedAnimation &&
+
+    char property[PROPERTY_VALUE_MAX];
+    if (property_get("persist.sys.force.hobby", property, NULL) > 0) {
+        if (strcmp(property, "true") == 0) {
+            if ((access(MY_BOOTANIMATION_FILE, R_OK) == 0) &&
+                ((zipFile = ZipFileRO::open(MY_BOOTANIMATION_FILE)) != NULL)) {
+                mAndroidAnimation = false;
+            } else {
+                DIR *bootanime_dir = opendir(MY_BOOTANIMATION_DIR);
+                if (bootanime_dir != NULL) {
+                    int file_cnt = 0;
+                    char *zip_list[256];
+                    struct dirent *dir_file;
+                    dir_file = readdir(bootanime_dir);
+                    while(dir_file != NULL){
+                        char *file_name = dir_file->d_name;
+                        if ((strncmp(file_name, "bootanimation_",14) == 0) &&
+                           (strncmp(strrchr(file_name,'.'),".zip",4) == 0)) {
+                            zip_list[file_cnt] = file_name;
+                            file_cnt++;
+                        }
+                        dir_file = readdir(bootanime_dir);
+                    }
+                    closedir(bootanime_dir);
+
+                    if (file_cnt > 0) {
+                        srand((unsigned)time(NULL));
+
+                        char bootanime_file[256];
+                        memset(bootanime_file, 0, 256);
+                        strcat(bootanime_file, MY_BOOTANIMATION_DIR);
+                        strcat(bootanime_file, zip_list[rand() % file_cnt]);
+                        ALOGD("select %s",bootanime_file );
+
+                        if ((access(bootanime_file, R_OK) == 0) &&
+                            ((zipFile = ZipFileRO::open(const_cast<char*>(bootanime_file))) != NULL)) {
+                            mAndroidAnimation = false;
+                        }
+                    }
+                }
+            }
+            mZip = zipFile;
+        }
+    }
+
+    if ( false != mAndroidAnimation ) {
+        if ((encryptedAnimation &&
             (access(getAnimationFileName(IMG_ENC), R_OK) == 0) &&
             ((zipFile = ZipFileRO::open(getAnimationFileName(IMG_ENC))) != NULL)) ||
 
@@ -394,7 +445,8 @@ status_t BootAnimation::readyToRun() {
 
             ((access(getAnimationFileName(IMG_SYS), R_OK) == 0) &&
             ((zipFile = ZipFileRO::open(getAnimationFileName(IMG_SYS))) != NULL))) {
-        mZip = zipFile;
+            mZip = zipFile;
+        }
     }
 
     return NO_ERROR;
@@ -566,6 +618,7 @@ bool BootAnimation::movie()
     }
 
     Animation animation;
+    srand((unsigned)time(NULL));
 
     // Parse the description file
     for (;;) {
@@ -584,13 +637,23 @@ bool BootAnimation::movie()
             animation.height = height;
             animation.fps = fps;
         }
-        else if (sscanf(l, " %c %d %d %s #%6s", &pathType, &count, &pause, path, color) >= 4) {
+        else if (sscanf(l, " %c %d %d %[^\r\n] #%6s", &pathType, &count, &pause, path, color) >= 4) {
             // ALOGD("> type=%c, count=%d, pause=%d, path=%s, color=%s", pathType, count, pause, path, color);
+            int i = 0;
+            char *path_str[256];
+            char *savepath = NULL;
+            path_str[i] = strtok_r(path, " ,", &savepath);
+            while (path_str[i] != NULL) {
+                i++;
+                path_str[i] = strtok_r(NULL, " ,", &savepath);
+            }
+            if (i == 0) continue;
+            
             Animation::Part part;
             part.playUntilComplete = pathType == 'c';
             part.count = count;
             part.pause = pause;
-            part.path = path;
+            part.path = path_str[rand() % i];
             part.audioFile = NULL;
             if (!parseColor(color, part.backgroundColor)) {
                 ALOGE("> invalid color '#%s'", color);
