@@ -813,6 +813,26 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         setControllerUsers();
 
         notifyUserAboutHiddenNotifications();
+
+        IntentFilter jcfilter = new IntentFilter();
+        jcfilter.addAction(Intent.ACTION_JCROM_THEME_CHANGE);
+        mContext.registerReceiver(new JCReceiver(), jcfilter);
+    }
+
+    private final class JCReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context content, Intent intent) {
+            initNotifications();
+        }
+    }
+
+    public void initNotifications() {
+        themeLoadNotifications();
+    }
+
+    public void themeLoadNotifications() {
+        prepareNotificationBackground();
+        updateNotificationBackground();
     }
 
     boolean isMSim() {
