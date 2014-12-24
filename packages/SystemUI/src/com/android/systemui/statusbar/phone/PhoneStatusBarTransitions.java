@@ -53,7 +53,7 @@ public final class PhoneStatusBarTransitions extends BarTransitions {
         }
         mBattery = mView.findViewById(R.id.battery);
         mClock = mView.findViewById(R.id.clock);
-        applyModeBackground(-1, getMode(), false /*animate*/);
+        applyModeBackground(MODE_INIT, getMode(), false /*animate*/);
         applyMode(getMode(), false /*animate*/);
     }
 
