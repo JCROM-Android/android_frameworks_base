@@ -404,7 +404,12 @@ public class SearchPanelView extends FrameLayout implements StatusBarPanel {
         builder.append(MY_FILE_NAME);
         String filePath = builder.toString();
         String extension = checkThemeFile(filePath);
-        return Drawable.createFromPath(filePath + extension);
+        File file = new File(filePath + extension);
+        Drawable drawable = null;
+        if(file.exists()) {
+            drawable = Drawable.createFromPath(filePath + extension);
+        }
+        return drawable;
     }
 
 }

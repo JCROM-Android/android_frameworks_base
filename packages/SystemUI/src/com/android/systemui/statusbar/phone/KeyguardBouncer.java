@@ -63,7 +63,6 @@ public class KeyguardBouncer {
     private ViewGroup mRoot;
     private boolean mShowingSoon;
     private Choreographer mChoreographer = Choreographer.getInstance();
-    private Bitmap bitmapWallpaper;
 
     public KeyguardBouncer(Context context, ViewMediatorCallback callback,
             LockPatternUtils lockPatternUtils, StatusBarWindowManager windowManager,
@@ -292,8 +291,13 @@ public class KeyguardBouncer {
         builder.append(MY_FILE_NAME);
         String filePath = builder.toString();
         String extension = checkThemeFile(filePath);
-        bitmapWallpaper = BitmapFactory.decodeFile(filePath + extension);
-        Drawable d = new BitmapDrawable(mContext.getResources(), bitmapWallpaper);
-        return d;
+        File file = new File(filePath + extension);
+        Bitmap bitmap = null;
+        Drawable drawable = null;
+        if(file.exists()) {
+            bitmap = BitmapFactory.decodeFile(filePath + extension);
+            drawable = new BitmapDrawable(mContext.getResources(), bitmap);
+        }
+        return drawable;
     }
 }
