@@ -42,6 +42,20 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.PathInterpolator;
 
+import android.os.SystemProperties;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+import android.content.res.Resources;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
+import android.os.Environment;
+import android.view.Display;
+import android.view.WindowManager;
+import android.view.Surface;
+
 import com.android.systemui.R;
 
 /**
@@ -136,6 +150,10 @@ public abstract class ActivatableNotificationView extends ExpandableOutlineView 
     private final int mLowPriorityColor;
     private boolean mIsBelowSpeedBump;
 
+    private static final String THEME_DIRECTORY = "/theme/notification/";
+    private static final String CONFIGURATION_FILE = "notification.conf";
+    private static final String NOTIFICATIONBAR_COLOR = "color.notification_bar";
+
     public ActivatableNotificationView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
@@ -168,8 +186,9 @@ public abstract class ActivatableNotificationView extends ExpandableOutlineView 
         super.onFinishInflate();
         mBackgroundNormal = (NotificationBackgroundView) findViewById(R.id.backgroundNormal);
         mBackgroundDimmed = (NotificationBackgroundView) findViewById(R.id.backgroundDimmed);
-        mBackgroundNormal.setCustomBackground(R.drawable.notification_material_bg);
-        mBackgroundDimmed.setCustomBackground(R.drawable.notification_material_bg_dim);
+        //mBackgroundNormal.setCustomBackground(R.drawable.notification_material_bg);
+        //mBackgroundDimmed.setCustomBackground(R.drawable.notification_material_bg_dim);
+        setNotificationBarBackground();
         updateBackground();
         updateBackgroundTint();
     }
@@ -714,4 +733,90 @@ public abstract class ActivatableNotificationView extends ExpandableOutlineView 
         void onActivated(ActivatableNotificationView view);
         void onActivationReset(ActivatableNotificationView view);
     }
+
+    private boolean requiresRotation() {
+        WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        Display dp = wm.getDefaultDisplay();
+
+        return dp.getRotation()==Surface.ROTATION_90 || dp.getRotation()==Surface.ROTATION_270;
+    }
+
+    private String checkThemeFile(String filename) {
+        String extension = ".png";
+        File file = null;
+
+        file = new File(filename + ".png");
+        if(file.exists()) {
+            extension = ".png";
+        }else {
+            file = new File(filename + ".jpg");
+            if(file.exists()) {
+                extension = ".jpg";
+            }
+        }
+        return extension;
+    }
+
+    private Drawable getDrawableFromFile(String DIR, String MY_FILE_NAME) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(Environment.getDataDirectory().toString() + "/theme/"+DIR+"/");
+        builder.append(File.separator);
+        builder.append(MY_FILE_NAME);
+        String filePath = builder.toString();
+        String extension = checkThemeFile(filePath);
+        File file = new File(filePath + extension);
+        Drawable drawable = null;
+        if(file.exists()) {
+            drawable = Drawable.createFromPath(filePath + extension);
+        }
+        return drawable;
+    }
+
+    private String loadConf(String filePath, String propertyName) {
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream(filePath));
+            return prop.getProperty(propertyName);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private void setNotificationBarBackground() {
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        Drawable drawable = null;
+        Resources res = mContext.getResources();
+
+        String mFilePath = null;
+        String mColorNotificationBar = null;
+
+        if(forceHobby.equals("true")) {
+            if(requiresRotation()) {
+                drawable = getDrawableFromFile("notification", "notification_item_background_land");
+            }else{
+                drawable = getDrawableFromFile("notification", "notification_item_background");
+            }
+
+            if(drawable == null) {
+                mFilePath = Environment.getDataDirectory() + THEME_DIRECTORY + CONFIGURATION_FILE;
+                mColorNotificationBar = loadConf(mFilePath, NOTIFICATIONBAR_COLOR);
+                if(mColorNotificationBar != null) {
+                    drawable = new ColorDrawable((int)(Long.parseLong(mColorNotificationBar, 16)));
+                }
+            }
+
+            if(drawable != null && mBackgroundNormal != null) {
+                mBackgroundNormal.setCustomBackground(drawable);
+            }
+            if(drawable != null && mBackgroundDimmed != null) {
+                mBackgroundDimmed.setCustomBackground(drawable);
+            }
+        }
+
+        if (drawable == null) {
+            mBackgroundNormal.setCustomBackground(R.drawable.notification_material_bg);
+            mBackgroundDimmed.setCustomBackground(R.drawable.notification_material_bg_dim);
+        }
+    }
+
 }

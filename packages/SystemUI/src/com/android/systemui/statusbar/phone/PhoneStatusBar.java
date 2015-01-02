@@ -191,8 +191,9 @@ import com.android.systemui.statusbar.stack.StackScrollState.ViewState;
 import com.android.systemui.volume.VolumeComponent;
 
 import java.io.File;
-import android.graphics.drawable.Drawable;
-import android.widget.ImageView;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 import android.os.Environment;
 import android.graphics.drawable.LevelListDrawable;
 import android.graphics.drawable.StateListDrawable;
@@ -268,6 +269,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
     /** Allow some time inbetween the long press for back and recents. */
     private static final int LOCK_TO_APP_GESTURE_TOLERENCE = 200;
+
+    private static final String THEME_DIRECTORY = "/theme/notification/";
+    private static final String CONFIGURATION_FILE = "notification.conf";
+    private static final String NOTIFICATIONBAR_COLOR = "color.notification_bar";
 
     PhoneStatusBarPolicy mIconPolicy;
 
@@ -824,17 +829,28 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         public void onReceive(Context content, Intent intent) {
             if (mNotificationPanel != null) mNotificationPanel.themeLoad();
             if (mSearchPanelView != null) mSearchPanelView.themeLoad();
-            initNotifications();
+            themeLoadNotifications();
         }
-    }
-
-    public void initNotifications() {
-        themeLoadNotifications();
     }
 
     public void themeLoadNotifications() {
         prepareNotificationBackground();
         updateNotificationBackground();
+        updateNotificationBarBackground();
+    }
+
+    public void updateNotificationBarBackground() {
+        ArrayList<Entry> activeNotifications = mNotificationData.getActiveNotifications();
+        int N = activeNotifications.size();
+
+        for (int i=0; i<N; i++) {
+            Entry ent = activeNotifications.get(N-i-1);
+            if (NotificationData.showNotificationEvenIfUnprovisioned(ent.notification)) continue;
+            if (ent.expanded != null)
+                setViewBackground(ent.expanded, R.drawable.notification_material_bg);
+            if (ent.expandedPublic != null)
+                setViewBackground(ent.expandedPublic, R.drawable.notification_material_bg_dim);
+        }
     }
 
     boolean isMSim() {
@@ -3633,6 +3649,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
         updateShowSearchHoldoff();
         updateRowStates();
+
+        updateNotificationBarBackground();
     }
 
     @Override
@@ -4711,7 +4729,12 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         builder.append(MY_FILE_NAME);
         String filePath = builder.toString();
         String extension = checkThemeFile(filePath);
-        return Drawable.createFromPath(filePath + extension);
+        File file = new File(filePath + extension);
+        Drawable drawable = null;
+        if(file.exists()) {
+            drawable = Drawable.createFromPath(filePath + extension);
+        }
+        return drawable;
     }
 
     private String checkThemeFile(String filename) {
@@ -4838,4 +4861,49 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         updateNotificationBackground();
     }
 
+    private String loadConf(String filePath, String propertyName) {
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream(filePath));
+            return prop.getProperty(propertyName);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private void setViewBackground(View view, int drawableResId) {
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        Drawable drawable = null;
+        Resources res = mContext.getResources();
+
+        String mFilePath = null;
+        String mColorNotificationBar = null;
+
+        if(forceHobby.equals("true")) {
+            if(requiresRotation()) {
+                drawable = getDrawableFromFile("notification", "notification_item_background_land");
+            }else{
+                drawable = getDrawableFromFile("notification", "notification_item_background");
+            }
+
+            if(drawable == null) {
+                mFilePath = Environment.getDataDirectory() + THEME_DIRECTORY + CONFIGURATION_FILE;
+                mColorNotificationBar = loadConf(mFilePath, NOTIFICATIONBAR_COLOR);
+                if(mColorNotificationBar != null) {
+                    drawable = new ColorDrawable((int)(Long.parseLong(mColorNotificationBar, 16)));
+                }
+            }
+
+            if(drawable != null && view != null) {
+                view.setBackground(drawable);
+            }
+        }
+
+        if(drawable == null) {
+            drawable = mContext.getDrawable(drawableResId);
+            if(drawable != null) {
+                view.setBackground(drawable);
+            }
+        }
+    }
 }
