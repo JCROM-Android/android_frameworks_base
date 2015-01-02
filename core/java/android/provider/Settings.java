@@ -5497,6 +5497,10 @@ public final class Settings {
          */
         public static final String STATS_COLLECTION = "stats_collection";
 
+        /**
+         * @hide
+         */
+        public static final String INSTALL_BLACK_LIST = "install_black_list";
 
         /**
          * Performance profile
