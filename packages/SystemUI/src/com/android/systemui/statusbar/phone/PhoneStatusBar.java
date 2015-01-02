@@ -823,6 +823,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         @Override
         public void onReceive(Context content, Intent intent) {
             mNotificationPanel.themeLoad();
+            mSearchPanelView.themeLoad();
             initNotifications();
         }
     }

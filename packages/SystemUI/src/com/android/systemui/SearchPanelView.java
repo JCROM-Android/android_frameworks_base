@@ -42,6 +42,15 @@ import com.android.systemui.statusbar.CommandQueue;
 import com.android.systemui.statusbar.StatusBarPanel;
 import com.android.systemui.statusbar.phone.PhoneStatusBar;
 
+import android.os.SystemProperties;
+import java.io.File;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
+import android.os.Environment;
+import android.view.Display;
+import android.view.WindowManager;
+import android.view.Surface;
+
 public class SearchPanelView extends FrameLayout implements StatusBarPanel {
 
     private static final String TAG = "SearchPanelView";
@@ -113,6 +122,7 @@ public class SearchPanelView extends FrameLayout implements StatusBarPanel {
         mCircle = (SearchPanelCircleView) findViewById(R.id.search_panel_circle);
         mLogo = (ImageView) findViewById(R.id.search_logo);
         mScrim = findViewById(R.id.search_panel_scrim);
+        setSearchPanelBackground();
     }
 
     private void maybeSwapSearchIcon() {
@@ -342,4 +352,59 @@ public class SearchPanelView extends FrameLayout implements StatusBarPanel {
         mHorizontal = horizontal;
         mCircle.setHorizontal(horizontal);
     }
+
+    public void themeLoad() {
+        onFinishInflate();
+    }
+
+    private void setSearchPanelBackground() {
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        Drawable drawable = null;
+        Resources res = mContext.getResources();
+
+        if(forceHobby.equals("true")) {
+            if(requiresRotation()) {
+                drawable = getDrawableFromFile("navibar", "search_panel_image_land");
+            }else{
+                drawable = getDrawableFromFile("navibar", "search_panel_image");
+            }
+            if(drawable != null && mScrim != null) {
+                mScrim.setBackground(drawable);
+            }
+        }
+    }
+
+    private boolean requiresRotation() {
+        WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        Display dp = wm.getDefaultDisplay();
+
+        return dp.getRotation()==Surface.ROTATION_90 || dp.getRotation()==Surface.ROTATION_270;
+    }
+
+    private String checkThemeFile(String filename) {
+        String extension = ".png";
+        File file = null;
+
+        file = new File(filename + ".png");
+        if(file.exists()) {
+            extension = ".png";
+        }else {
+            file = new File(filename + ".jpg");
+            if(file.exists()) {
+                extension = ".jpg";
+            }
+        }
+        return extension;
+    }
+
+    private Drawable getDrawableFromFile(String DIR, String MY_FILE_NAME) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(Environment.getDataDirectory().toString() + "/theme/"+DIR+"/");
+        builder.append(File.separator);
+        builder.append(MY_FILE_NAME);
+        String filePath = builder.toString();
+        String extension = checkThemeFile(filePath);
+        return Drawable.createFromPath(filePath + extension);
+    }
+
 }
