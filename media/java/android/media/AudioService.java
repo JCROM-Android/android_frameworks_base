@@ -100,6 +100,8 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 
+import java.io.File;
+
 /**
  * The implementation of the volume manager service.
  * <p>
@@ -262,6 +264,8 @@ public class AudioService extends IAudioService.Stub {
     /* Sound effect file names  */
     private static final String SOUND_EFFECTS_PATH = "/media/audio/ui/";
     private static final List<String> SOUND_EFFECT_FILES = new ArrayList<String>();
+
+    protected boolean mhobbyflg = false;
 
     /* Sound effect file name mapping sound effect id (AudioManager.FX_xxx) to
      * file index in SOUND_EFFECT_FILES[] (first column) and indicating if effect
@@ -635,6 +639,7 @@ public class AudioService extends IAudioService.Stub {
         intentFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
 
         intentFilter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
+        intentFilter.addAction(Intent.ACTION_JCROM_THEME_CHANGE);
         // TODO merge orientation and rotation
         mMonitorOrientation = SystemProperties.getBoolean("ro.audio.monitorOrientation", false);
         if (mMonitorOrientation) {
@@ -665,6 +670,11 @@ public class AudioService extends IAudioService.Stub {
                 com.android.internal.R.array.config_masterVolumeRamp);
 
         LocalServices.addService(AudioManagerInternal.class, new AudioServiceInternal());
+
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        if (forceHobby.equals("true")) {
+            mhobbyflg = true;
+        }
     }
 
     public void systemReady() {
@@ -3970,9 +3980,32 @@ public class AudioService extends IAudioService.Stub {
                         continue;
                     }
                     if (poolId[SOUND_EFFECT_FILES_MAP[effect][0]] == -1) {
-                        String filePath = Environment.getRootDirectory()
-                                + SOUND_EFFECTS_PATH
-                                + SOUND_EFFECT_FILES.get(SOUND_EFFECT_FILES_MAP[effect][0]);
+                        String sound_effects_path;
+                        StringBuilder builder = new StringBuilder();
+                        String root_path;
+                        String filePath;
+
+                        if ( mhobbyflg == true ) {
+                            builder.append("/theme/sounds/effect/");
+                            builder.append(File.separator);
+                            sound_effects_path = builder.toString();
+                            root_path = Environment.getDataDirectory().toString();
+                            filePath = root_path + sound_effects_path
+                               + SOUND_EFFECT_FILES.get(SOUND_EFFECT_FILES_MAP[effect][0]);
+                            File file = new File(filePath);
+                            if (!(file.exists())) {
+                                sound_effects_path = SOUND_EFFECTS_PATH;
+                                root_path = Environment.getRootDirectory().toString();
+                                filePath = root_path + sound_effects_path
+                                    + SOUND_EFFECT_FILES.get(SOUND_EFFECT_FILES_MAP[effect][0]);
+                            }
+                        } else {
+                            sound_effects_path = SOUND_EFFECTS_PATH;
+                            root_path = Environment.getRootDirectory().toString();
+                            filePath = root_path + sound_effects_path
+                                 + SOUND_EFFECT_FILES.get(SOUND_EFFECT_FILES_MAP[effect][0]);
+                        }
+
                         int sampleId = mSoundPool.load(filePath, 0);
                         if (sampleId <= 0) {
                             Log.w(TAG, "Soundpool could not load file: "+filePath);
@@ -4078,8 +4111,32 @@ public class AudioService extends IAudioService.Stub {
                 } else {
                     MediaPlayer mediaPlayer = new MediaPlayer();
                     try {
-                        String filePath = Environment.getRootDirectory() + SOUND_EFFECTS_PATH +
-                                    SOUND_EFFECT_FILES.get(SOUND_EFFECT_FILES_MAP[effectType][0]);
+                        String sound_effects_path;
+                        StringBuilder builder = new StringBuilder();
+                        String root_path;
+                        String filePath;
+
+                        if ( mhobbyflg == true ) {
+                            builder.append("/theme/sounds/effect/");
+                            builder.append(File.separator);
+                            sound_effects_path = builder.toString();
+                            root_path = Environment.getDataDirectory().toString();
+                            filePath = root_path + sound_effects_path
+                                + SOUND_EFFECT_FILES.get(SOUND_EFFECT_FILES_MAP[effectType][0]);
+                            File file = new File(filePath);
+                            if (!(file.exists())) {
+                                sound_effects_path = SOUND_EFFECTS_PATH;
+                                root_path = Environment.getRootDirectory().toString();
+                                filePath = root_path + sound_effects_path
+                                    + SOUND_EFFECT_FILES.get(SOUND_EFFECT_FILES_MAP[effectType][0]);
+                            }
+                        } else {
+                            sound_effects_path = SOUND_EFFECTS_PATH;
+                            root_path = Environment.getRootDirectory().toString();
+                            filePath = root_path + sound_effects_path
+                                + SOUND_EFFECT_FILES.get(SOUND_EFFECT_FILES_MAP[effectType][0]);
+                        }
+
                         mediaPlayer.setDataSource(filePath);
                         mediaPlayer.setAudioStreamType(AudioSystem.STREAM_SYSTEM);
                         mediaPlayer.prepare();
@@ -5006,6 +5063,9 @@ public class AudioService extends IAudioService.Stub {
                         0,
                         0,
                         mStreamStates[AudioSystem.STREAM_MUSIC], 0);
+            } else if (action.equals(Intent.ACTION_JCROM_THEME_CHANGE)) {
+                unloadSoundEffects();
+                loadSoundEffects();
             }
         }
     } // end class AudioServiceBroadcastReceiver
