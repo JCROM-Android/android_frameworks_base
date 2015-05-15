@@ -20,6 +20,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.os.ServiceManager;
+import android.os.SystemProperties;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
@@ -51,7 +52,7 @@ public final class NavigationBarTransitions extends BarTransitions {
 
     public void init(boolean isVertical) {
         setVertical(isVertical);
-        applyModeBackground(-1, getMode(), false /*animate*/);
+        applyModeBackground(MODE_INIT, getMode(), false /*animate*/);
         applyMode(getMode(), false /*animate*/, true /*force*/);
     }
 
@@ -93,7 +94,11 @@ public final class NavigationBarTransitions extends BarTransitions {
     }
 
     private float alphaForMode(int mode) {
-        final boolean isOpaque = mode == MODE_OPAQUE || mode == MODE_LIGHTS_OUT;
+        boolean isOpaque = mode == MODE_OPAQUE || mode == MODE_LIGHTS_OUT;
+        String alphaNavikey = SystemProperties.get("persist.sys.alpha.navikey");
+        if((alphaNavikey.equals("true"))) {
+            isOpaque = false;
+        }
         return isOpaque ? KeyButtonView.DEFAULT_QUIESCENT_ALPHA : 1f;
     }
 

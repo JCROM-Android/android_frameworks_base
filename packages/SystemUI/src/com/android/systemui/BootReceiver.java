@@ -23,12 +23,16 @@ import android.content.Intent;
 import android.provider.Settings;
 import android.util.Log;
 
+import com.android.internal.view.RotationPolicy;
+import android.os.SystemProperties;
+
 /**
  * Performs a number of miscellaneous, non-system-critical actions
  * after the system has finished booting.
  */
 public class BootReceiver extends BroadcastReceiver {
     private static final String TAG = "SystemUIBootReceiver";
+    private static final String FORCE_ROTATION_LOCK = "persist.sys.force.lock";
 
     @Override
     public void onReceive(final Context context, Intent intent) {
@@ -39,6 +43,13 @@ public class BootReceiver extends BroadcastReceiver {
                 Intent loadavg = new Intent(context, com.android.systemui.LoadAverageService.class);
                 context.startService(loadavg);
             }
+            String rotationLock = SystemProperties.get(FORCE_ROTATION_LOCK, "none");
+            if (rotationLock.equals("true")) {
+                RotationPolicy.setRotationLock(context, true);
+            } else if (rotationLock.equals("false")) {
+                RotationPolicy.setRotationLock(context, false);
+            }
+            SystemProperties.set(FORCE_ROTATION_LOCK, "none");
         } catch (Exception e) {
             Log.e(TAG, "Can't start load average service", e);
         }

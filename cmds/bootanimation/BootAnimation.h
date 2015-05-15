@@ -106,6 +106,7 @@ private:
     EGLDisplay  mSurface;
     sp<SurfaceControl> mFlingerSurfaceControl;
     sp<Surface> mFlingerSurface;
+    bool        mAndroidAnimation;
     ZipFileRO   *mZip;
 };
 

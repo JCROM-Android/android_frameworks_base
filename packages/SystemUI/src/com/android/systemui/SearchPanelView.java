@@ -61,6 +61,15 @@ import java.util.List;
 
 import static com.android.internal.util.cm.NavigationRingConstants.*;
 
+import android.os.SystemProperties;
+import java.io.File;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
+import android.os.Environment;
+import android.view.Display;
+import android.view.WindowManager;
+import android.view.Surface;
+
 public class SearchPanelView extends FrameLayout implements StatusBarPanel,
         View.OnClickListener, ShortcutPickHelper.OnPickListener {
 
@@ -168,6 +177,8 @@ public class SearchPanelView extends FrameLayout implements StatusBarPanel,
 
         mCircle.initializeAdditionalTargets(this);
         updateDrawables();
+
+        setSearchPanelBackground();
     }
 
     private void maybeSwapSearchIcon(ImageView view) {
@@ -547,4 +558,64 @@ public class SearchPanelView extends FrameLayout implements StatusBarPanel,
     protected void onDetachedFromWindow() {
         mPicker.cleanup();
     }
+
+    public void themeLoad() {
+        onFinishInflate();
+    }
+
+    private void setSearchPanelBackground() {
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        Drawable drawable = null;
+        Resources res = mContext.getResources();
+
+        if(forceHobby.equals("true")) {
+            if(requiresRotation()) {
+                drawable = getDrawableFromFile("navibar", "search_panel_image_land");
+            }else{
+                drawable = getDrawableFromFile("navibar", "search_panel_image");
+            }
+            if(drawable != null && mScrim != null) {
+                mScrim.setBackground(drawable);
+            }
+        }
+    }
+
+    private boolean requiresRotation() {
+        WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        Display dp = wm.getDefaultDisplay();
+
+        return dp.getRotation()==Surface.ROTATION_90 || dp.getRotation()==Surface.ROTATION_270;
+    }
+
+    private String checkThemeFile(String filename) {
+        String extension = ".png";
+        File file = null;
+
+        file = new File(filename + ".png");
+        if(file.exists()) {
+            extension = ".png";
+        }else {
+            file = new File(filename + ".jpg");
+            if(file.exists()) {
+                extension = ".jpg";
+            }
+        }
+        return extension;
+    }
+
+    private Drawable getDrawableFromFile(String DIR, String MY_FILE_NAME) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(Environment.getDataDirectory().toString() + "/theme/"+DIR+"/");
+        builder.append(File.separator);
+        builder.append(MY_FILE_NAME);
+        String filePath = builder.toString();
+        String extension = checkThemeFile(filePath);
+        File file = new File(filePath + extension);
+        Drawable drawable = null;
+        if(file.exists()) {
+            drawable = Drawable.createFromPath(filePath + extension);
+        }
+        return drawable;
+    }
+
 }

@@ -29,6 +29,23 @@ import com.android.keyguard.R;
 import com.android.keyguard.ViewMediatorCallback;
 import com.android.systemui.keyguard.KeyguardViewMediator;
 
+import java.io.File;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.view.View;
+import android.view.WindowManager;
+import android.view.Display;
+import android.view.Surface;
+import android.os.SystemProperties;
+import android.os.Environment;
+import android.graphics.drawable.ColorDrawable;
+import android.content.res.Resources;
+import android.widget.ImageView;
+import android.widget.ImageView.ScaleType;
+import android.widget.FrameLayout;
+
 import static com.android.keyguard.KeyguardHostView.OnDismissAction;
 import static com.android.keyguard.KeyguardSecurityModel.SecurityMode;
 
@@ -170,6 +187,7 @@ public class KeyguardBouncer {
         mContainer.addView(mRoot, mContainer.getChildCount());
         mRoot.setVisibility(View.INVISIBLE);
         mRoot.setSystemUiVisibility(View.STATUS_BAR_DISABLE_HOME);
+        setLockScreenWallpaper();
     }
 
     private void removeView() {
@@ -217,5 +235,69 @@ public class KeyguardBouncer {
     public boolean interceptMediaKey(KeyEvent event) {
         ensureView();
         return mKeyguardView.interceptMediaKey(event);
+    }
+
+    private String checkThemeFile(String filename) {
+        String extension = ".png";
+        File file = null;
+
+        file = new File(filename + ".png");
+        if(file.exists()) {
+            extension = ".png";
+        }else {
+            file = new File(filename + ".jpg");
+            if(file.exists()) {
+                extension = ".jpg";
+            }
+        }
+
+        return extension;
+    }
+
+    public void setLockScreenWallpaper() {
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        Drawable drawable = null;
+        Resources res = mContext.getResources();
+
+        if(forceHobby.equals("true")) {
+            if(requiresRotation()) {
+                drawable = getDrawableFromFile("lockscreen", "lockscreen_wallpaper_land");
+                if(drawable == null) {
+                    drawable = getDrawableFromFile("lockscreen", "lockscreen_wallpaper");
+                }
+            }else{
+                drawable = getDrawableFromFile("lockscreen", "lockscreen_wallpaper");
+            }
+            if(null == drawable) {
+                drawable = new ColorDrawable(res.getColor(R.color.keyguard_background_transparent));
+            }
+        }else{
+            drawable = new ColorDrawable(res.getColor(R.color.keyguard_background_transparent));
+        }
+
+        mRoot.setBackground(drawable);
+    }
+
+    public boolean requiresRotation() {
+        WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        Display dp = wm.getDefaultDisplay();
+        return dp.getRotation()==Surface.ROTATION_90 || dp.getRotation()==Surface.ROTATION_270;
+    }
+
+    public Drawable getDrawableFromFile(String DIR, String MY_FILE_NAME) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(Environment.getDataDirectory().toString() + "/theme/"+DIR+"/");
+        builder.append(File.separator);
+        builder.append(MY_FILE_NAME);
+        String filePath = builder.toString();
+        String extension = checkThemeFile(filePath);
+        File file = new File(filePath + extension);
+        Bitmap bitmap = null;
+        Drawable drawable = null;
+        if(file.exists()) {
+            bitmap = BitmapFactory.decodeFile(filePath + extension);
+            drawable = new BitmapDrawable(mContext.getResources(), bitmap);
+        }
+        return drawable;
     }
 }

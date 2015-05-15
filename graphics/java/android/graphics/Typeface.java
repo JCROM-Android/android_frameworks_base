@@ -32,6 +32,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.os.SystemProperties;
+import java.io.File;
+
 /**
  * The Typeface class specifies the typeface and intrinsic style of a font.
  * This is used in the paint, along with optionally Paint settings like

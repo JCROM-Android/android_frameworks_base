@@ -16,8 +16,12 @@
 
 package android.media;
 
+import java.io.File;
+
 import android.media.AudioManager;
 import android.media.SoundPool;
+import android.os.Environment;
+import android.os.SystemProperties;
 import android.util.Log;
 
 /**
@@ -53,6 +57,13 @@ public class MediaActionSound {
         "/system/media/audio/ui/camera_focus.ogg",
         "/system/media/audio/ui/VideoRecord.ogg",
         "/system/media/audio/ui/VideoRecord.ogg"
+    };
+
+    private static final String[] SOUND_FILES_JCROM = {
+        "camera_click.ogg",
+        "camera_focus.ogg",
+        "VideoRecord.ogg",
+        "VideoRecord.ogg"
     };
 
     private static final String TAG = "MediaActionSound";
@@ -123,9 +134,34 @@ public class MediaActionSound {
             throw new RuntimeException("Unknown sound requested: " + soundName);
         }
         if (mSoundIds[soundName] == SOUND_NOT_LOADED) {
+            jcromSoundLoad(soundName);
+        }
+    }
+
+    private int jcromSoundLoad(int soundName) {
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        if (forceHobby.equals("true")) {
+            StringBuilder builder = new StringBuilder();
+            builder.append(Environment.getDataDirectory().toString() + "/theme/sounds/camera/");
+            //builder.append(File.separator);
+            builder.append(SOUND_FILES_JCROM[soundName]);
+            String filePath = builder.toString();
+            File file = new File(filePath);
+            // if file for jcrom customize exists
+            if (file.exists()) {
+                mSoundIds[soundName] =
+                        mSoundPool.load(filePath, 1);
+                Log.e(TAG, "jcrom load success");
+            } else {
+                mSoundIds[soundName] =
+                        mSoundPool.load(SOUND_FILES[soundName], 1);
+                Log.e(TAG, "normal load");
+            }
+        } else {
             mSoundIds[soundName] =
                     mSoundPool.load(SOUND_FILES[soundName], 1);
         }
+        return mSoundIds[soundName];
     }
 
     /**
@@ -164,8 +200,7 @@ public class MediaActionSound {
             throw new RuntimeException("Unknown sound requested: " + soundName);
         }
         if (mSoundIds[soundName] == SOUND_NOT_LOADED) {
-            mSoundIdToPlay =
-                    mSoundPool.load(SOUND_FILES[soundName], 1);
+            mSoundIdToPlay = jcromSoundLoad(soundName);
             mSoundIds[soundName] = mSoundIdToPlay;
         } else {
             mSoundPool.play(mSoundIds[soundName], 1.0f, 1.0f, 0, 0, 1.0f);

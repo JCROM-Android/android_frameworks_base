@@ -62,7 +62,10 @@ public class StatusBarWindowManager implements KeyguardMonitor.Callback {
 
     private final State mCurrentState = new State();
 
+    private static final String LOCKSCREEN_ROTATE_PROPERTY = "persist.sys.lockscreen.rotate";
+
     public StatusBarWindowManager(Context context, KeyguardMonitor kgm) {
+
         mContext = context;
         mWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         mKeyguardScreenRotation = shouldEnableKeyguardScreenRotation();
@@ -79,8 +82,10 @@ public class StatusBarWindowManager implements KeyguardMonitor.Callback {
 
     private boolean shouldEnableKeyguardScreenRotation() {
         Resources res = mContext.getResources();
+        String rotation = SystemProperties.get(LOCKSCREEN_ROTATE_PROPERTY);
         return SystemProperties.getBoolean("lockscreen.rot_override", false)
-                || res.getBoolean(R.bool.config_enableLockScreenRotation);
+                || res.getBoolean(R.bool.config_enableLockScreenRotation)
+                || rotation.equals("true");
     }
 
     /**

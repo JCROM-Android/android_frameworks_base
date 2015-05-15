@@ -5914,6 +5914,8 @@ public final class Settings {
          */
         public static final String VOLUME_LINK_NOTIFICATION = "volume_link_notification";
 
+        public static final String INSTALL_BLACK_LIST = "install_black_list";
+
         /**
          * Performance profile
          * @see config_perf_profile_prop in frameworks/base/core/res/res/values/config.xml

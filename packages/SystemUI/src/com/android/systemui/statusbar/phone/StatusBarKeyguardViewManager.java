@@ -95,6 +95,7 @@ public class StatusBarKeyguardViewManager {
      */
     public void show(Bundle options) {
         mShowing = true;
+        mPhoneStatusBar.setLockscreen(true);
         mStatusBarWindowManager.setKeyguardShowing(true);
         reset();
     }
@@ -234,6 +235,7 @@ public class StatusBarKeyguardViewManager {
      */
     public void hide(long startTime, final long fadeoutDuration) {
         mShowing = false;
+        mPhoneStatusBar.setLockscreen(false);
 
         long uptimeMillis = SystemClock.uptimeMillis();
         long delay = Math.max(0, startTime + HIDE_TIMING_CORRECTION_MS - uptimeMillis);

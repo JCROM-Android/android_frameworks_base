@@ -178,6 +178,8 @@ public class LockPatternUtils {
     // The current user is set by KeyguardViewMediator and shared by all LockPatternUtils.
     private static volatile int sCurrentUserId = UserHandle.USER_NULL;
 
+    private static final String VOICE_CAPABLE_PROPERTY = "persist.sys.voice.capable";
+
     public DevicePolicyManager getDevicePolicyManager() {
         if (mDevicePolicyManager == null) {
             mDevicePolicyManager =
@@ -1306,8 +1308,9 @@ public class LockPatternUtils {
     }
 
     public boolean isEmergencyCallCapable() {
-        return mContext.getResources().getBoolean(
-                com.android.internal.R.bool.config_voice_capable);
+        //return mContext.getResources().getBoolean(
+        //        com.android.internal.R.bool.config_voice_capable);
+        return SystemProperties.getBoolean(VOICE_CAPABLE_PROPERTY, true);
     }
 
     public boolean isPukUnlockScreenEnable() {

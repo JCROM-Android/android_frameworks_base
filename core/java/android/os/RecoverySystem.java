@@ -71,6 +71,7 @@ public class RecoverySystem {
     /** Used to communicate with recovery.  See bootable/recovery/recovery.c. */
     private static File RECOVERY_DIR = new File("/cache/recovery");
     private static File COMMAND_FILE = new File(RECOVERY_DIR, "command");
+    private static File TWRP_COMMAND_FILE = new File(RECOVERY_DIR, "openrecoveryscript");
     private static File LOG_FILE = new File(RECOVERY_DIR, "log");
     private static String LAST_PREFIX = "last_";
 
@@ -340,6 +341,15 @@ public class RecoverySystem {
         bootCommand(context, filenameArg, localeArg);
     }
 
+    public static void installPackage(Context context, File packageFile, File gappsFile)
+        throws IOException {
+        String filename = packageFile.getCanonicalPath();
+        String gappsname = gappsFile.getCanonicalPath();
+        Log.w(TAG, "!!! REBOOTING TO INSTALL " + filename + " + " + gappsname + " !!!");
+        String arg = ("install " + filename + "\ninstall " + gappsname);
+        twrpCommand(context, arg);
+    }
+
     /**
      * Reboots the device and wipes the user data and cache
      * partitions.  This is sometimes called a "factory reset", which
@@ -474,6 +484,25 @@ public class RecoverySystem {
         pm.reboot(PowerManager.REBOOT_RECOVERY);
 
         throw new IOException("Reboot failed (no permissions?)");
+    }
+
+    private static void twrpCommand(Context context, String arg) {
+        RECOVERY_DIR.mkdirs();
+        TWRP_COMMAND_FILE.delete();
+        LOG_FILE.delete();
+
+        FileWriter command = null;
+        try {
+            command = new FileWriter(TWRP_COMMAND_FILE);
+            command.write(arg);
+            command.write("\n");
+            command.close();
+        } catch (IOException e) {
+            Log.e(TAG, "twrpCommand: " + e);
+        }
+
+        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        pm.reboot(PowerManager.REBOOT_RECOVERY);
     }
 
     /**

@@ -190,6 +190,22 @@ import com.android.systemui.statusbar.stack.StackScrollAlgorithm;
 import com.android.systemui.statusbar.stack.StackScrollState.ViewState;
 import com.android.systemui.volume.VolumeComponent;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+import android.os.Environment;
+import android.graphics.drawable.LevelListDrawable;
+import android.graphics.drawable.StateListDrawable;
+import android.util.StateSet;
+import android.os.SystemProperties;
+import android.view.Surface;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Build;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -255,6 +271,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
     /** Allow some time inbetween the long press for back and recents. */
     private static final int LOCK_TO_APP_GESTURE_TOLERENCE = 200;
+
+    private static final String THEME_DIRECTORY = "/theme/notification/";
+    private static final String CONFIGURATION_FILE = "notification.conf";
+    private static final String NOTIFICATIONBAR_COLOR = "color.notification_bar";
 
     PhoneStatusBarPolicy mIconPolicy;
 
@@ -323,7 +343,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     NotificationPanelView mNotificationPanel; // the sliding/resizing panel within the notification window
     View mExpandedContents;
     int mNotificationPanelGravity;
-    int mNotificationPanelMarginBottomPx;
+    int mNotificationPanelMarginBottomPx, mNotificationPanelMarginPx;
     float mNotificationPanelMinHeightFrac;
     TextView mNotificationPanelDebugText;
 
@@ -398,6 +418,11 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
     // tracking calls to View.setSystemUiVisibility()
     int mSystemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE;
+
+    Drawable mNotificationTrackingDrawable = null;
+    Drawable mNotificationTrackingLandDrawable = null;
+
+    boolean mSelectLockscreen = true;
 
     DisplayMetrics mDisplayMetrics = new DisplayMetrics();
 
@@ -864,6 +889,39 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         notifyUserAboutHiddenNotifications();
 
         updateCustomRecentsLongPressHandler(true);
+
+        IntentFilter jcfilter = new IntentFilter();
+        jcfilter.addAction(Intent.ACTION_JCROM_THEME_CHANGE);
+        mContext.registerReceiver(new JCReceiver(), jcfilter);
+    }
+
+    private final class JCReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context content, Intent intent) {
+            if (mNotificationPanel != null) mNotificationPanel.themeLoad();
+            if (mSearchPanelView != null) mSearchPanelView.themeLoad();
+            themeLoadNotifications();
+        }
+    }
+
+    public void themeLoadNotifications() {
+        prepareNotificationBackground();
+        updateNotificationBackground();
+        updateNotificationBarBackground();
+    }
+
+    public void updateNotificationBarBackground() {
+        ArrayList<Entry> activeNotifications = mNotificationData.getActiveNotifications();
+        int N = activeNotifications.size();
+
+        for (int i=0; i<N; i++) {
+            Entry ent = activeNotifications.get(N-i-1);
+            if (NotificationData.showNotificationEvenIfUnprovisioned(ent.notification)) continue;
+            if (ent.expanded != null)
+                setViewBackground(ent.expanded, R.drawable.notification_material_bg);
+            if (ent.expandedPublic != null)
+                setViewBackground(ent.expandedPublic, R.drawable.notification_material_bg_dim);
+        }
     }
 
     boolean isMSim() {
@@ -1061,6 +1119,9 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 tickerView.mTicker = mTicker;
             }
         }
+
+        prepareNotificationBackground();
+        updateNotificationBackground();
 
         mEdgeBorder = res.getDimensionPixelSize(R.dimen.status_bar_edge_ignore);
 
@@ -3741,6 +3802,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
         updateShowSearchHoldoff();
         updateRowStates();
+
+        updateNotificationBarBackground();
     }
 
     @Override
@@ -5151,6 +5214,198 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                         handleStopDozing();
                         break;
                 }
+            }
+        }
+    }
+
+    public boolean requiresRotation() {
+        WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        Display dp = wm.getDefaultDisplay();
+
+        return dp.getRotation()==Surface.ROTATION_90 || dp.getRotation()==Surface.ROTATION_270;
+    }
+
+    public Drawable getDrawableFromFile(String DIR, String MY_FILE_NAME) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(Environment.getDataDirectory().toString() + "/theme/"+DIR+"/");
+        builder.append(File.separator);
+        builder.append(MY_FILE_NAME);
+        String filePath = builder.toString();
+        String extension = checkThemeFile(filePath);
+        File file = new File(filePath + extension);
+        Drawable drawable = null;
+        if(file.exists()) {
+            drawable = Drawable.createFromPath(filePath + extension);
+        }
+        return drawable;
+    }
+
+    private String checkThemeFile(String filename) {
+        String extension = ".png";
+        File file = null;
+
+        file = new File(filename + ".png");
+        if(file.exists()) {
+            extension = ".png";
+        }else {
+            file = new File(filename + ".jpg");
+            if(file.exists()) {
+                extension = ".jpg";
+            }
+        }
+
+        return extension;
+    }
+
+    public void prepareNotificationBackground() {
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        if (forceHobby.equals("true")) {
+
+            if(mNotificationPanelMarginPx==0){ // for Phone UI
+
+                if(mSelectLockscreen) {
+                    mNotificationTrackingDrawable = getDrawableFromFile("lockscreen", "lockscreen_wallpaper");
+                    mNotificationTrackingLandDrawable = getDrawableFromFile("lockscreen", "lockscreen_wallpaper_land");
+                }else {
+                    mNotificationTrackingDrawable = getDrawableFromFile("notification", "notification_tracking_bg");
+                    mNotificationTrackingLandDrawable = getDrawableFromFile("notification", "notification_tracking_bg_land");
+                }
+
+            }else{  // for Phone UI(Large)
+
+                if(mSelectLockscreen) {
+                    mNotificationTrackingDrawable = getLargeNotificationBackground("lockscreen", "lockscreen_wallpaper");
+                    mNotificationTrackingLandDrawable = getLargeNotificationBackground("lockscreen", "lockscreen_wallpaper_land");
+                }else {
+                    mNotificationTrackingDrawable = getLargeNotificationBackground("notification", "notification_tracking_bg");
+                    mNotificationTrackingLandDrawable = getLargeNotificationBackground("notification", "notification_tracking_bg_land");
+                }
+
+            }
+        }
+    }
+
+    public Drawable getLargeNotificationBackground(String pathname, String filename){
+
+        Drawable d = getDrawableFromFile(pathname, filename);
+
+        if(d != null){
+
+            Bitmap bmp_org = ((BitmapDrawable)d).getBitmap();
+
+            int w_org = bmp_org.getWidth();
+            int h_org = bmp_org.getHeight();
+            Rect r_org = new Rect(0, 0, w_org, h_org);
+
+            Resources res = mContext.getResources();
+            float density = res.getDisplayMetrics().density;
+            int margin = (int)(16 * density + 0.5f);
+
+            int w_large = (int) res.getDimension(R.dimen.notification_panel_width) - 2 * margin;
+            int w_target = w_large;
+
+            int h_target = (int) (h_org*w_target*density/w_org + 0.5f);
+            int h_large =  h_target + (int)((margin+1)*density + 0.5f);
+
+            Rect r_target = new Rect(0, 0, w_target, h_target);
+
+            Bitmap bmp_large = Bitmap.createBitmap(w_large, h_large, Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(bmp_large);
+            c.drawBitmap(bmp_org, r_org, r_target, null);
+
+            return new BitmapDrawable(bmp_large);
+
+        }else{
+            return null;
+        }
+    }
+
+    public void updateNotificationBackground() {
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        FrameLayout f = (FrameLayout) mNotificationPanel.findViewById(R.id.notification_panel);
+        Resources res = mContext.getResources();
+        
+        if (forceHobby.equals("true")) {
+            if (requiresRotation()) {
+                if(mNotificationTrackingLandDrawable != null){
+                    f.setBackgroundDrawable(mNotificationTrackingLandDrawable);
+                }else if(mNotificationTrackingDrawable != null){
+                    f.setBackgroundDrawable(mNotificationTrackingDrawable);
+                }else {
+                    if(mSelectLockscreen) {
+                        f.setBackgroundDrawable(new ColorDrawable(res.getColor(R.color.keyguard_background_transparent)));
+                    }else {
+                        f.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.notification_panel_bg));
+                    }
+                }
+            }else{
+                if(mNotificationTrackingDrawable != null){
+                    f.setBackgroundDrawable(mNotificationTrackingDrawable);
+                }else {
+                    if(mSelectLockscreen) {
+                        f.setBackgroundDrawable(new ColorDrawable(res.getColor(R.color.keyguard_background_transparent)));
+                    }else {
+                        f.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.notification_panel_bg));
+                    }
+                }
+            }
+        }else {
+            if(mSelectLockscreen) {
+                f.setBackgroundDrawable(new ColorDrawable(res.getColor(R.color.keyguard_background_transparent)));
+            }else {
+                f.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.notification_panel_bg));
+            }
+        }
+    }
+
+    public void setLockscreen(boolean selectLockscreen) {
+        mSelectLockscreen = selectLockscreen;
+        prepareNotificationBackground();
+        updateNotificationBackground();
+    }
+
+    private String loadConf(String filePath, String propertyName) {
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream(filePath));
+            return prop.getProperty(propertyName);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private void setViewBackground(View view, int drawableResId) {
+        String forceHobby = SystemProperties.get("persist.sys.force.hobby");
+        Drawable drawable = null;
+        Resources res = mContext.getResources();
+
+        String mFilePath = null;
+        String mColorNotificationBar = null;
+
+        if(forceHobby.equals("true")) {
+            if(requiresRotation()) {
+                drawable = getDrawableFromFile("notification", "notification_item_background_land");
+            }else{
+                drawable = getDrawableFromFile("notification", "notification_item_background");
+            }
+
+            if(drawable == null) {
+                mFilePath = Environment.getDataDirectory() + THEME_DIRECTORY + CONFIGURATION_FILE;
+                mColorNotificationBar = loadConf(mFilePath, NOTIFICATIONBAR_COLOR);
+                if(mColorNotificationBar != null) {
+                    drawable = new ColorDrawable((int)(Long.parseLong(mColorNotificationBar, 16)));
+                }
+            }
+
+            if(drawable != null && view != null) {
+                view.setBackground(drawable);
+            }
+        }
+
+        if(drawable == null) {
+            drawable = mContext.getDrawable(drawableResId);
+            if(drawable != null) {
+                view.setBackground(drawable);
             }
         }
     }
